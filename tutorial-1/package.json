@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "ts-node -r tsconfig-paths/register src/server.ts",
+    "start": "ts-node src/server.ts",
     "start:nodemon": "./node_modules/nodemon/bin/nodemon.js",
     "start:prod": "npm run build && node ./dist/src/server.js",
     "build": "npx tsc"

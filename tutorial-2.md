@@ -2,7 +2,7 @@
 
 Why do we need error handling at all?
 
-Imagine that a client application (web, mobile...) is using the server. Sometimes we need to handle exceptions which appear in the application and we need to send a clear message to the user what is wrong. It is very important to have a working error handler inside the application in order to achieve better user experience and for many other reasons as well. Beside from the user experience, it is a good practice to catch errors in one place (all the errors go trough handler) so the developer can track the bugs/exceptions more easily.
+Imagine that a client application (web, mobile...) is using the server. Sometimes we need to handle exceptions which appear in the application and we need to send a clear message to the user what is wrong. It is very important to have a working error handler inside the application in order to achieve better user experience and for many other reasons as well. Beside from the user experience, it is a good practice to catch errors in one place (all the errors go through the handler) so the developer can track the bugs/exceptions more easily.
 
 # Creating exceptions
 
@@ -25,13 +25,13 @@ class SomethingIsWrongError extends Error {
 throw new SomethingIsWrongError();
 ```
 
-Before we start creating our error handler we need to decide what is the right way to go. Most of my applications have supported/support multiple languages which means that the message needs to be translated into language which user has selected. We cannot show error in English language if the user has selected Japanese language which means the error message needs to be translated somewhere. Either we translate the message on the server side or on the client side.
+Before we start creating our error handler we need to decide what is the right way to go. Most of my applications have supported/support multiple languages which means that the message needs to be translated into the language which the user has selected. We cannot show errors in English language if the user has selected Japanese language which means the error message needs to be translated somewhere. Either we translate the message on the server side or on the client side.
 
 - Server side translation
-  In order to translate the message on the server side we have always to know to whome we are sending the exception in order to get the selected language from user. Challenge of this approach is that a developer needs always to have the selected language of user whenever an error message needs to be sent to the client side.
+  In order to translate the message on the server side we have to know to whom we are sending the exception in order to get the selected language from the user. Challenge of this approach is that a developer needs always to have the selected language of the user whenever an error message needs to be sent to the client side.
 
 - Client side translation
-  Other solution is to send an unique error code and any additional data if needed so the translation of exception should be done on the client side based on the code and this is the solutions which I prefer.
+  Other solution is to send an unique error code and any additional data if needed so the translation of exceptions should be done on the client side based on the code and this is the solution which I prefer.
 
 The client side needs to know:
 
@@ -39,9 +39,9 @@ The client side needs to know:
 - Unique error code. Every error has its own unique code.
 - Metadata if any. If any additional dynamic data needs to be sent in order to translate the message like what is the maximum allowed input number etc.
 
-In order to more easily keep track of all the errors we have, we need to create a class in which we will store all possible errors that we know about. When we throw an exception then we will refer to one of the codes found in that class.
+In order to keep track of all the errors more easily, we need to create a class in which we will store all possible errors that we know about. When we throw an exception then we will refer to one of the codes found in that class.
 
-Create a folder called `error-handler` in root directory and this will be the place where we will create files for error handler logic. Create a file called `error-code.ts` with following code:
+Create a folder called `error-handler` in the root directory and this will be the place where we will create files for error handler logic. Create a file called `error-code.ts` with following code:
 
 ```typescript
 export class ErrorCode {
@@ -53,7 +53,7 @@ export class ErrorCode {
 }
 ```
 
-We also need to have a model that we will return to the client. Create a file called `error-model` inside `error-handler` folder with following code:
+We also need to have a model that we will return to the client. Create a file called `error-model.ts` inside `error-handler` folder with following code:
 
 ```typescript
 export class ErrorModel {
@@ -72,7 +72,7 @@ export class ErrorModel {
 }
 ```
 
-And now we need to create the actual error exception object. Create a file called `error-exception` inside `error-handler` folder with following code:
+And now we need to create the actual error exception object. Create a file called `error-exception.ts` inside `error-handler` folder with following code:
 
 ```typescript
 import { ErrorCode } from './error-code';
@@ -99,12 +99,15 @@ export class ErrorException extends Error {
       case ErrorCode.NotFound:
         this.status = 404;
         break;
+      default:
+        this.status = 500;
+        break;
     }
   }
 }
 ```
 
-When we want to throw error from our application we use exactly the class we created and one code from available list of codes. We would throw an error like:
+When we want to throw an error from our application we use exactly the class we created and one code from the available list of codes. We would throw an error like:
 
 ```typescript
 throw new ErrorException(ErrorCode.MaximumAllowedGrade, { max: 100 }); // object is optional
@@ -119,7 +122,7 @@ Error handler is a special middleware in Node.js which takes 4 parameters. Regul
 3. res
 4. next
 
-The following handler will intercept all errors that occur in the application whether it is an exception that we know or an exception that we do not know. In order to recognize that it is an exception thrown by ourselves, we can recognize it by type of instance `if (err instanceof ErrorException) `
+Create file called `error-handler.ts` inside `error-handler` folder. The following handler will intercept all errors that occur in the application whether it is an exception that we know or an exception that we do not know. In order to recognize that it is an exception thrown by ourselves, we can recognize it by type of instance `if (err instanceof ErrorException) `
 
 ```typescript
 import { Request, Response, NextFunction } from 'express';
@@ -141,7 +144,7 @@ export const errorHandler = (err: Error, req: Request, res: Response, next: Next
 };
 ```
 
-Now it is necessary to register this handler and we will register it on as follows. The handler needs to be 'lowered' as far as possible in the application after all routes and other middleware and handlers. If we specify routes or middlewares after registration of `errorHandler` then the error handler will not catch exceptions which appear in those routes or middlewares.
+Now it is necessary to register this handler and we will register it as follows. The handler needs to be 'lowered' as far as possible in the application after all routes and other middlewares and handlers. If we specify routes or middlewares after registration of `errorHandler` then the error handler will not catch exceptions which appear in those routes or middlewares.
 
 ```typescript
 app.use(errorHandler); // registration of handler
@@ -171,11 +174,11 @@ app.get('/throw-unknown-error', (req: Request, res: Response, next: NextFunction
 });
 ```
 
-If you look at the code above, you will see that we have 2 `known` exceptions and one `unknown`. When we want to throw an exception from route we can do it with `throw` keyword or by calling the `next` function with actuall exception. Error handler will catch both exceptions. however, when it comes to async logic then it will be solved in another way which we will cover next.
+If you look at the code above, you will see that we have 2 `known` exceptions and one `unknown`. When we want to throw an exception from a route we can do it with the `throw` keyword or by calling the `next` function with an actual exception. Error handler will catch both exceptions. However, when it comes to async logic then it will be solved in another way which we will cover next.
 
 # Exceptions with promises
 
-By express documentation:
+By Exress documentation:
 Handling sync code:
 `Errors that occur in synchronous code inside route handlers and middleware require no extra work. If synchronous code throws an error, then Express will catch and process it. For example:`
 
@@ -234,3 +237,8 @@ app.get('/throw-async-await-error', async (req: Request, res: Response, next: Ne
   // await someOtherFunction();
 });
 ```
+
+# Wrapping up
+In this tutorial we covered what exceptions are and how to throw an exception in application. We learned what we need to consider when handling exceptions in multi language applications. We learned to do everything necessary for the Node.JS application to successfully manage exceptions from creating necessary classes to creating a handler and registering it. And finally we learned how to throw exceptions and what to take care of when throwing exceptions in async or sync blocks.
+
+Comming up: Authentication with JWT.
