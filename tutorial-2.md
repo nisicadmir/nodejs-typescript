@@ -1,10 +1,14 @@
-# Error handling in Node.js with Express
+[Github repository](https://github.com/nisicadmir/nodejs-typescript)
+
+[Create new Node.js application with Express, TypeScript, Nodemon and ESLint - Part 1](https://dev.to/admirnisic/create-new-node-js-application-with-express-typescript-nodemon-and-eslint-f2l)
+[Error handling in Node.js with Express - Part 2](https://dev.to/admirnisic/error-handling-in-node-js-with-express-part-2-30lb)
+
 
 Why do we need error handling at all?
 
 Imagine that a client application (web, mobile...) is using the server. Sometimes we need to handle exceptions which appear in the application and we need to send a clear message to the user what is wrong. It is very important to have a working error handler inside the application in order to achieve better user experience and for many other reasons as well. Beside from the user experience, it is a good practice to catch errors in one place (all the errors go through the handler) so the developer can track the bugs/exceptions more easily.
 
-# Creating exceptions
+## Creating exceptions
 
 An exception is created using the `throw` keyword inside the application.
 
@@ -113,7 +117,7 @@ When we want to throw an error from our application we use exactly the class we 
 throw new ErrorException(ErrorCode.MaximumAllowedGrade, { max: 100 }); // object is optional
 ```
 
-# Error handler
+## Error handler
 
 Error handler is a special middleware in Node.js which takes 4 parameters. Regular route middleware takes 3 parameters: req, res and next. Error handler also takes these 3 parameters and one additional parameter which is the actual error. Those four parameters are (retrospectively):
 
@@ -176,7 +180,7 @@ app.get('/throw-unknown-error', (req: Request, res: Response, next: NextFunction
 
 If you look at the code above, you will see that we have 2 `known` exceptions and one `unknown`. When we want to throw an exception from a route we can do it with the `throw` keyword or by calling the `next` function with an actual exception. Error handler will catch both exceptions. However, when it comes to async logic then it will be solved in another way which we will cover next.
 
-# Exceptions with promises
+## Exceptions with promises
 
 By Exress documentation:
 Handling sync code:

@@ -1,4 +1,8 @@
-# Create new Node.js application with Express, TypeScript, Nodemon and ESLint
+[Github repository](https://github.com/nisicadmir/nodejs-typescript)
+
+[Create new Node.js application with Express, TypeScript, Nodemon and ESLint - Part 1](https://dev.to/admirnisic/create-new-node-js-application-with-express-typescript-nodemon-and-eslint-f2l)
+[Error handling in Node.js with Express - Part 2](https://dev.to/admirnisic/error-handling-in-node-js-with-express-part-2-30lb)
+
 
 Node.js is an open-source and cross-platform runtime environment and a very popular tool for building applications. It runs on V8 JavaScript engine which makes it highly performant. It was released in 2009 and since then it is getting more and more popular. One of the advantages is that it uses JavaScript programming language which means that the same programming language can be used for server-side and client-side applications. There are few popular frameworks which run on Node.js platform and most popular is Express. In this tutorial I am going to use Express framework.
 
@@ -12,7 +16,7 @@ A big positive change emerged when the TypeScript language was released. TypeScr
 
 It is not hard to migrate your code from JavaScript to TypeScript and I strongly recommend using TypeScript in Node.js projects.
 
-# Creating an express project.
+## Creating an express project.
 
 We are going to start with a new project. Initialize npm with command:
 
@@ -88,7 +92,7 @@ baseUrl: specifies what is the relative path when including files in the applica
 
 esModuleInterop: this option is true by default; it controls interoperability between CommonJS and ES modules. It does this by creating namespace objects for all imports.
 
-# Create application files
+## Create application files
 
 Create a folder called src where the application files will be placed and then inside that folder create a file called `server.ts`. File `server.ts` will be the starting point of the application.
 
@@ -126,7 +130,7 @@ We can run the application with commands:
 
 After we start the application we can visit `http://localhost:3000` in any browser and except that we see `Application works!`.
 
-# Nodemon
+## Nodemon
 
 Nodemon is a tool which is widely used and which tracks changes and automatically restarts the application. If we do not use Nodemon then after each change we have to stop the application and run it again.
 
@@ -155,7 +159,7 @@ Remove the comments of course. Add additional script for nodemon inside package.
 
 Now we can start watching the application with command `npm run start:nodemon`. Application will be restarted after we change any TypeScript file inside `src` folder.
 
-# Using ESLint with prettier
+## Using ESLint with prettier
 
 Eslint is a linter for JavaScript/TypeScript which finds problems inside your code. I cannot imagine writing TypeScript code without using ESLint. Previously I was using TSLint for TypeScript but now it is deprecated and ESLint should be used instead. Additional package which I would recommend to use is prettier together with ESLint.
 NOTE: Prettier can be used also to automatically format your code (which I prefer) but we will not cover it in this tutorial.
@@ -225,8 +229,6 @@ We added plugin for prettier as well so the linter will tell us when something i
 
 Now we are able to see if there is any error/warning inside our code. Restart your IDE if needed.
 
-# Wrapping up
+## Wrapping up
 
 In this tutorial we covered how to use Node.js project with TypeScript language from scratch. We also covered how to build and run the application. Nodemon is used to restart the application whenever a change in code happens. And finally we enabled linter with ESLint and configured it to our needs together with prettier.
-
-Comming up: Using error handler with Express.
