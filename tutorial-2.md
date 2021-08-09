@@ -1,9 +1,5 @@
 [Github repository](https://github.com/nisicadmir/nodejs-typescript)
 
-[Create new Node.js application with Express, TypeScript, Nodemon and ESLint - Part 1](https://dev.to/admirnisic/create-new-node-js-application-with-express-typescript-nodemon-and-eslint-f2l)
-[Error handling in Node.js with Express - Part 2](https://dev.to/admirnisic/error-handling-in-node-js-with-express-part-2-30lb)
-
-
 Why do we need error handling at all?
 
 Imagine that a client application (web, mobile...) is using the server. Sometimes we need to handle exceptions which appear in the application and we need to send a clear message to the user what is wrong. It is very important to have a working error handler inside the application in order to achieve better user experience and for many other reasons as well. Beside from the user experience, it is a good practice to catch errors in one place (all the errors go through the handler) so the developer can track the bugs/exceptions more easily.

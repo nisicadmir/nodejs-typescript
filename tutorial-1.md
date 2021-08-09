@@ -1,9 +1,5 @@
 [Github repository](https://github.com/nisicadmir/nodejs-typescript)
 
-[Create new Node.js application with Express, TypeScript, Nodemon and ESLint - Part 1](https://dev.to/admirnisic/create-new-node-js-application-with-express-typescript-nodemon-and-eslint-f2l)
-[Error handling in Node.js with Express - Part 2](https://dev.to/admirnisic/error-handling-in-node-js-with-express-part-2-30lb)
-
-
 Node.js is an open-source and cross-platform runtime environment and a very popular tool for building applications. It runs on V8 JavaScript engine which makes it highly performant. It was released in 2009 and since then it is getting more and more popular. One of the advantages is that it uses JavaScript programming language which means that the same programming language can be used for server-side and client-side applications. There are few popular frameworks which run on Node.js platform and most popular is Express. In this tutorial I am going to use Express framework.
 
 A big positive change emerged when the TypeScript language was released. TypeScript is a language which builds on JavaScript and some of the advantages using TypeScript are:
