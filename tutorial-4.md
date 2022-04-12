@@ -159,4 +159,4 @@ Finally in `Example 3` we can see that both `title` and `body` meet the requirem
 
 
 # Wrapping up
-In this tutorial we learned why it is important to have a validator in our application and we briefly looked at which libraries we can use in the Node.JS application. We mentioned why I chose the class-validator library and finally created the code implementation that demonstrates a couple of examples of failed and one example of successful validation.
+In this tutorial we learned why it is important to have a validator in our application and we briefly looked at which libraries we can use in the Node.js application. We mentioned why I chose the class-validator library and finally created the code implementation that demonstrates a couple of examples of failed and one example of successful validation.
