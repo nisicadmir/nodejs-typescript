@@ -28,7 +28,7 @@ export class Note {
 ```
 
 
-Code for mongoose will looklike:
+Code for mongoose.
 ```typescript
 import { model, Model, Schema } from 'mongoose';
 import { Note } from './note.model';
@@ -146,18 +146,16 @@ app.post('/note', authMiddleware, async (req: Request, res: Response, next: Next
 });
 ```
 
-Now that everything is prepared, we can check what happens when we send data which is not valid and data which is valid.
+Now that everything is prepared, we can check what happens when we send data which is not valid and when we send data which is valid.
+
 If we look at `Example 1` we will see that the field `title` field is missing and that field `body` is missing the character length.
+![Example 1](https://raw.githubusercontent.com/nisicadmir/nodejs-typescript/master/tutorial-4/example_1.png "Example 1")
 
-![Example 1](file:///home/admir/Desktop/Projects/nodejs-typescript/tutorial-4/example_1.png "Example 1")
+In `Example 2` we can see that the field `title` is present but the character lenght is not met, same is with field `body`.
+![Example 2](https://github.com/nisicadmir/nodejs-typescript/blob/master/tutorial-4/example_2.png?raw=true "Example 2")
 
-In example 2 we can see that the field `title` is present but the character lenght is not met, same is with field `body`.
-
-![Example 2](https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fpngimg.com%2Fuploads%2Fapple%2Fapple_PNG12436.png&f=1&nofb=1 "Example 2")
-
-Finally in example 3 we can see that both `title` and `body` met the requirements and that we successfully created note.
-
-![Example 3](https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fpngimg.com%2Fuploads%2Fapple%2Fapple_PNG12436.png&f=1&nofb=1 "Example 3")
+Finally in `Example 3` we can see that both `title` and `body` meet the requirements and that we have successfully created a note.
+![Example 3](https://github.com/nisicadmir/nodejs-typescript/blob/master/tutorial-4/example_3.png?raw=true "Example 3")
 
 
 # Wrapping up
