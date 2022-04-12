@@ -1,269 +1,164 @@
 [Github repository](https://github.com/nisicadmir/nodejs-typescript)
 
-I don't think it's necessary to explain why we need to have an authentication system in an application at all. You've probably heard of the terms `authentication` and `authorization` and I have to point out that these words have different meanings.
-"Authentication is the act of validating that users are whom they claim to be. This is the first step in any security process. " Okta.com
-"Authorization in system security is the process of giving the user permission to access a specific resource or function. This term is often used interchangeably with access control or client privilege." Okta.com
+In this tutorial we will learn how and why we need validating the data which is arriving on the API. Data validation is an essential part of an application whether the task is to collect information, analyze the data, prepare the data for presentation and many other use cases. It is important to verify the incoming data from the start because if the unwanted data is dragged on further through the application then it can happen that we have data that is not accurate.
+While data validation is a critical and important step in any data workflow, unfortunately it is often skipped over. Data validation requires more time and thus it slows down the work, however, it is esential because it will help us to create a cleaner data flow.
 
-In this tutorial we will learn how to make an authentication system using JWT.
+Nowadays, data validation is becoming easier to implement thanks to the many libraries that exist. There are many libraries out there but I will mention only few of them: class-validator, joi, fastst-validator.
+Just to mention that `NestJS`, which is a popular framework for building scalable Node.js applications, uses class-validator. `Moleculer` is another framework for building server side applications and is using fast-validator as default validator.
 
+What is important to note is that some validators work with the json-schema (joi, fastest-validator) of objects while some validators work using classes by adding decorators (class-validator).
 
-## Database models
+I personally think it is better to use a class based validator with the TypeScript language because it is not necessary to write classes and json-objects separately but we can use existing classes by adding decorators. Such is the case with class-validator and this is the library we will use in this tutorial.
 
-We will first have to deal with the database because we need to store user data somewhere. We need to store email and hashed password which will be used later for the sign in process. For this tutorial we will use NoSQL MongoDB database and we will also use mongoose. Mongoose is a MongoDB object modeling tool which is designed to work in an asynchronous environment and supports both promises and callbacks.
+## Modeling
 
-We will install the necessary packages:
+We will create a simple model for creating notes.
+```typescript
+export class Note {
+  _id: string;
+
+  title: string;
+  body: string;
+
+  authorId: string;
+
+  createdAt: string;
+  updatedAt: string;
+}
 ```
-npm install --save mongoose
-npm install --save-dev @types/mongoose
-```
 
-After the packages are installed, we can start making the model. We will create a model for the user who will have the fields _id, email, name and password. We will also create a unique email index so that there are no two users with the same email in our database.
 
+Code for mongoose will looklike:
 ```typescript
 import { model, Model, Schema } from 'mongoose';
+import { Note } from './note.model';
 
-export interface IUser {
-  _id: string;
-  email: string;
-  password: string;
-  name: string;
-}
-
-const IUserSchema = new Schema<IUser>(
+const NoteSchema = new Schema<Note>(
   {
     _id: { type: String, required: true },
-    email: {
-      type: String,
-      required: true,
-      lowercase: true,
-      index: true,
-      unique: true,
-    },
-    name: { type: String, required: true },
-    password: { type: String, required: true },
+
+    title: { type: String, required: true },
+    body: { type: String, required: true },
+
+    authorId: { type: String, required: true },
   },
-  { collection: 'user', timestamps: true }
+  { collection: 'note', timestamps: true }
 );
 
-export const UserModel: Model<IUser> = model('user', IUserSchema);
+export const NoteModel: Model<Note> = model('note', NoteSchema);
 ```
-Now lets create a connection to the MongoDB database via mongoose.
-> Note: We need to have a MongoDB database running in order to connect to it. If you use docker you can find the `docker-compose.yml` file on github which link is provided in this tutorial and just run `docker-compose up -d`.
 
-```typescript
-import mongoose, { Connection } from 'mongoose';
+We need to install class-validator library and add experimentalDecorators in tsconfig.json file
+```
+npm install --save class-validator
+```
 
-let mongooseConnection: Connection = null;
-export async function connect(): Promise<void> {
-  try {
-    mongoose.connection.on('connecting', () => {
-      console.log(`MongoDB: connecting.`);
-    });
-    mongoose.connection.on('connected', () => {
-      console.log('MongoDB: connected.');
-    });
-    mongoose.connection.on('disconnecting', () => {
-      console.log('MongoDB: disconnecting.');
-    });
-    mongoose.connection.on('disconnected', () => {
-      console.log('MongoDB: disconnected.');
-    });
-
-    if (mongoose.connection.readyState !== 1 && mongoose.connection.readyState !== 2) {
-      const conn = await mongoose.connect('mongodb://localhost:27017/ts-tutorial', { // <- replace connection string if necessary
-        autoIndex: true,
-        serverSelectionTimeoutMS: 5000,
-      });
-      mongooseConnection = conn.connection;
-    }
-  } catch (error) {
-    console.log(`Error connecting to DB`, error);
+```json
+{
+  "compilerOptions": {
+    "experimentalDecorators": true, // <- add this
+    "target": "es5",
+    "module": "commonjs",
+    "outDir": "./dist",
+    "rootDir": "./",
+    "baseUrl": "./",
+    "paths": {},
+    "esModuleInterop": true
   }
 }
 
 ```
 
-Now in the `server.ts` file we can call the method for connecting to the database:
-```typescript
-connect();
-```
-
-If the application is successfully connected to the database then we should get the messages from log:
-```bash
-MongoDB: connecting.
-Application started on port 3000!
-MongoDB: connected
-```
-
-# Sign up process
-We will first create an endpoint to which we will send data to create a new user. We will add the new route in the `server.ts` file. Email, name and password fields are required (we will not do the validation of parameters). After that, we must first check if there is an existing user with the same email and only after we determine that the user does not exist, can we proceed further.
-The next step is to make a hash of the plain password because the plain password is never stored in the database. So when we create a new user we take his plain password, make a hash and keep the hash in the database. We will need the hashed password later for the sign in process.
-
-
-Required npm packages:
-```bash
-npm install --save ulid
-npm install --save bcrypt
-npm install --save-dev @types/bcrypt
-```
+Now we can create models for validation and if we look at the code below, we will see that we have a couple of models.
+- `Note` is a basic model which is used for mongoose for creating its schema.
+- `NoteCreate` model is a model which is used to create data for MongoDB.
+- `NoteCreateAPI` is a validation model which is the data that we expect to come to the API.
 
 ```typescript
-app.post('/sign-up', async (req: Request, res: Response, next: NextFunction) => {
-  const { email, name, password } = req.body;
-  // check if user exists
-  const userExists = await UserModel.findOne({ email: email });
-  if (!!userExists) {
-    next(new ErrorException(ErrorCode.DuplicateEntityError, { email }));
-  }
+import { IsString, MaxLength, MinLength } from 'class-validator';
 
-  // generate password hash
-  const hash = passwordHash(password);
-  const newUser: IUser = {
-    _id: ulid(),
-    email,
-    name,
-    password: hash,
-  };
-  const created = await UserModel.create(newUser);
-  res.send({ done: true });
-});
-```
-> Note: Add the code in `server.ts` file before the routes for encoding the data that is being sent to our application from the client side.
-```typescript
-const app = express();
-app.use(
-  express.urlencoded({
-    extended: true,
-  })
-);
+// Actual model.
+export class Note {
+  _id: string;
 
-app.use(express.json());
-```
+  title: string;
+  body: string;
 
-We used the bcrypt library to create a hash from a plain password. The code for hashing and comparing plain and hashed passwords:
-```typescript
-import bcrypt from 'bcrypt';
+  authorId: string;
 
-export const passwordHash = (plainPassword: string): string => {
-  const hash = bcrypt.hashSync(plainPassword, 10);
-  return hash;
-};
+  createdAt: string;
+  updatedAt: string;
+}
 
-export const comparePassword = (plainPassword: string, passwordHash: string): boolean => {
-  const compared = bcrypt.compareSync(plainPassword, passwordHash);
-  return compared;
-};
-```
-In the code above, you can see that we have two functions. The `passwordHash` function will hash a plain password.
-The `comparePassword` function will check that the plain password entered is the same as the hash from the database. We will need this method later for the login form.
+// Model for creating item in database.
+export type NoteCreate = Pick<Note, '_id' | 'title' | 'body' | 'authorId'>;
 
-If we have successfully created a user in the database, the next step is to create a JWT when the user tries to sign in.
+// Validation model which comes to the API.
+export class NoteCreateAPI implements Pick<Note, 'title' | 'body'> {
+  @IsString()
+  @MinLength(10)
+  @MaxLength(500)
+  title: string;
 
-## Sign in process
-As we said in the introduction, we will use the jsonwebtoken package and for that we need to install the packages:
-```bash
-npm install --save jsonwebtoken
-npm install --save-dev @types/jsonwebtoken
+  @IsString()
+  @MinLength(100)
+  @MaxLength(5_000)
+  body: string;
+}
 ```
 
-Actually how does it work? It is necessary to create a route for sign in where it will be necessary to enter email and password.
+If we look at the `NoteCreateAPI` model we will see that we picked only `title` and `body` properties which are required in order to create the note. We will focus only on the property `title`. We added 3 decorators:
+- @IsString() - value must be of type string.
+- @MinLength(10) - value must be at least 10 characters long.
+- @MaxLength(500) - value must be at most 500 characters long.
 
-We will first check if there is a user with the provided email and if there is one, then we will take the password hash that is saved in the database. It is necessary to check whether the plain password from the login form agrees with the hash password from the database using the `comparePassword` method. If the method returns true then the user has entered a good password, otherwise the method will return false.
+I have added only some basic decorators but there is a great flexibility on how we want that model to look. More about what our model can look like and what parameters we can include we can see the documentation from the library: [class-validator documentation](https://www.npmjs.com/package/class-validator).
 
-After that, it is necessary to generate jsonwebtoken through the mentioned library. We will generate the JWT with the help of a secret key which we keep in our application and the client should not be aware of the secret key. We will generate that jsonwebtoken string and return that token to the client application.
+We will now create a POST API method and send data to that route.
+
+NOTE: The route is protected with authMiddleware we created in one of the previous tutorials.
 
 ```typescript
-app.post('/sign-in', async (req: Request, res: Response, next: NextFunction) => {
-  const { email, password } = req.body;
-  // check if user exists
-  const userExists = await UserModel.findOne({ email: email });
-  if (!userExists) {
-    next(new ErrorException(ErrorCode.Unauthenticated));
-  }
-
-  // validate the password
-  const validPassword = comparePassword(password, userExists.password);
-  if (!validPassword) {
-    next(new ErrorException(ErrorCode.Unauthenticated));
-  }
-
-  // generate the token
-  const token = generateAuthToken(userExists);
-
-  res.send({ token });
-});
-```
-
-Code for JWT helper:
-```typescript
-import { IUser } from '../models/db/user.db';
-import jwt from 'jsonwebtoken';
-import { ErrorException } from '../error-handler/error-exception';
-import { ErrorCode } from '../error-handler/error-code';
-
-const jwtKey = 'keyyyy';
-
-export const generateAuthToken = (user: IUser): string => {
-  const token = jwt.sign({ _id: user._id, email: user.email }, jwtKey, {
-    expiresIn: '2h',
-  });
-
-  return token;
-};
-
-export const verifyToken = (token: string): { _id: string; email: string } => {
-  try {
-    const tokenData = jwt.verify(token, jwtKey);
-    return tokenData as { _id: string; email: string };
-  } catch (error) {
-    throw new ErrorException(ErrorCode.Unauthenticated);
-  }
-};
-```
-
-## Authentication middleware
-We will create one middleware called `authMiddleware` which we will put on the routes where we need to have protection and whose job will be to check if the JWT that was generated is valid. `authMiddleware` function is just a middleware function which will get a token from the header and check its validation. We can check the validation of the token with the function `verifyToken` which is placed inside our middleware.
-
-The client side is required to send the JWT token string in the header for each API call that requires authentication. Header with authorization token looks like:
-```bash
-Authorization: Bearer eyJhbGciOiJIUzI1NiIXVCJ9TJV...r7E20RMHrHDcEfxjoYZgeFONFh7HgQ
-```
-
-Protected route with middleware:
-```typescript
-app.get('/protected-route', authMiddleware, (req: Request, res: Response, next: NextFunction) => {
+app.post('/note', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
   // data from the token that is verified
-  const tokenData = req.body.tokenData;
-  console.log('tokenData', tokenData);
-  res.send('this is a protected route');
+  const noteNew = new NoteCreateAPI();
+  noteNew.title = req.body.title;
+  noteNew.body = req.body.body;
+
+  // verify input parameters
+  const errors = await validate(noteNew);
+  if (errors.length) {
+    next(new ErrorException(ErrorCode.ValidationError, errors));
+  }
+
+  // create note data
+  const tokenData: { _id: string; email: string } = req.body.tokenData;
+  const noteCreate: NoteCreate = {
+    _id: ulid(),
+    title: noteNew.title,
+    body: noteNew.body,
+
+    authorId: tokenData._id,
+  };
+
+  const created = await NoteModel.create(noteCreate);
+  res.send(created);
 });
 ```
 
-The middleware itself:
-```typescript
-import { Request, Response, NextFunction } from 'express';
-import { ErrorCode } from '../error-handler/error-code';
-import { ErrorException } from '../error-handler/error-exception';
-import { verifyToken } from './jwt';
+Now that everything is prepared, we can check what happens when we send data which is not valid and data which is valid.
+If we look at `Example 1` we will see that the field `title` field is missing and that field `body` is missing the character length.
 
-export const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
-  const auth = req.headers.authorization;
-  if (auth && auth.startsWith('Bearer')) {
-    const token = auth.slice(7);
+![Example 1](file:///home/admir/Desktop/Projects/nodejs-typescript/tutorial-4/example_1.png "Example 1")
 
-    try {
-      const tokenData = verifyToken(token);
-      req.body.tokenData = tokenData;
-      next();
-    } catch (error) {
-      throw new ErrorException(ErrorCode.Unauthenticated);
-    }
-  } else {
-    throw new ErrorException(ErrorCode.Unauthenticated);
-  }
-};
+In example 2 we can see that the field `title` is present but the character lenght is not met, same is with field `body`.
 
-```
+![Example 2](https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fpngimg.com%2Fuploads%2Fapple%2Fapple_PNG12436.png&f=1&nofb=1 "Example 2")
+
+Finally in example 3 we can see that both `title` and `body` met the requirements and that we successfully created note.
+
+![Example 3](https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fpngimg.com%2Fuploads%2Fapple%2Fapple_PNG12436.png&f=1&nofb=1 "Example 3")
+
 
 # Wrapping up
-In this tutorial we covered how to create basic models with `mongoose` and `MongoDB` and how to connect to MongoDB instances. We also learned how to create a new user and save the user in the database and what is important, how to create a hash password using the `bcrypt` library. After saving the user, we showed how to create a sign in process and generate a token using the `jsonwebtoken` library. Finally, we demonstrated how to create one middleware to be placed on a route to protect certain routes.
+In this tutorial we learned why it is important to have a validator in our application and we briefly looked at which libraries we can use in the Node.JS application. We mentioned why I chose the class-validator library and finally created the code implementation that demonstrates a couple of examples of failed and one example of successful validation.

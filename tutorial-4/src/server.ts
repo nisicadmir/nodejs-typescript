@@ -9,6 +9,9 @@ import { ulid } from 'ulid';
 import { comparePassword, passwordHash } from './auth/password-hash';
 import { generateAuthToken } from './auth/jwt';
 import { authMiddleware } from './auth/auth.middleware';
+import { NoteCreate, NoteCreateAPI } from './models/db/note/note.model';
+import { validate } from 'class-validator';
+import { NoteModel } from './models/db/note/note.db';
 
 const app = express();
 app.use(
@@ -84,8 +87,10 @@ app.post('/sign-up', async (req: Request, res: Response, next: NextFunction) => 
 
 app.post('/sign-in', async (req: Request, res: Response, next: NextFunction) => {
   const { email, password } = req.body;
+  console.log('req.body', req.body);
   // check if user exists
   const userExists = await UserModel.findOne({ email: email });
+  console.log('userExists', userExists);
   if (!userExists) {
     next(new ErrorException(ErrorCode.Unauthenticated));
   }
@@ -107,6 +112,32 @@ app.get('/protected-route', authMiddleware, (req: Request, res: Response, next: 
   const tokenData = req.body.tokenData;
   console.log('tokenData', tokenData);
   res.send('this is a protected route');
+});
+
+app.post('/note', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
+  // data from the token that is verified
+  const noteNew = new NoteCreateAPI();
+  noteNew.title = req.body.title;
+  noteNew.body = req.body.body;
+
+  // verify input parameters
+  const errors = await validate(noteNew);
+  if (errors.length) {
+    next(new ErrorException(ErrorCode.ValidationError, errors));
+  }
+
+  // create note data
+  const tokenData: { _id: string; email: string } = req.body.tokenData;
+  const noteCreate: NoteCreate = {
+    _id: ulid(),
+    title: noteNew.title,
+    body: noteNew.body,
+
+    authorId: tokenData._id,
+  };
+
+  const created = await NoteModel.create(noteCreate);
+  res.send(created);
 });
 
 app.use(errorHandler); // registration of handler
