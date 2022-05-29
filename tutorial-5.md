@@ -1,162 +1,296 @@
 [Github repository](https://github.com/nisicadmir/nodejs-typescript)
 
-In this tutorial we will learn how and why we need validating the data which is arriving on the API. Data validation is an essential part of an application whether the task is to collect information, analyze the data, prepare the data for presentation and many other use cases. It is important to verify the incoming data from the start because if the unwanted data is dragged on further through the application then it can happen that we have data that is not accurate.
-While data validation is a critical and important step in any data workflow, unfortunately it is often skipped over. Data validation requires more time and thus it slows down the work, however, it is esential because it will help us to create a cleaner data flow.
+Socket.IO enables real-time event-based communication in both directions (client and server side). Socket.IO is built on top of WebSockets API and Node.js.
 
-Nowadays, data validation is becoming easier to implement thanks to the many libraries that exist. There are many libraries out there but I will mention only few of them: class-validator, joi, fastst-validator.
-Just to mention that `NestJS`, which is a popular framework for building scalable Node.js applications, uses class-validator. `Moleculer` is another framework for building server side applications and is using fast-validator as default validator.
+A real-time application (RTA) is an application that functions within a period that the user senses as immediate. Some examples of real-time applications are:
+- instant messaging system - Chat apps like WhatsApp, Facebook Messenger etc,
+- push notifications,
+- applications like Google docs which allows multiple people to update the same document simultaneously.
 
-What is important to note is that some validators work with the json-schema (joi, fastest-validator) of objects while some validators work using classes by adding decorators (class-validator).
+Writting a real-time application without WebSockets, using HTTP requests, has been traditionally very hard. It involves polling the server for changes and by design it is very slow and requires more resources.
 
-I personally think it is better to use a class based validator with the TypeScript language because it is not necessary to write classes and json-objects separately but we can use existing classes by adding decorators. Such is the case with class-validator and this is the library we will use in this tutorial.
+Sockets are an easier and faster solution which most real-time systems are designed on which provides bi-directional communication channel between a client and a server. This means that whenever an event occurs, the server can push messages to clients so the client gets notified immediately and vice versa.
 
-## Modeling
+Socket.IO is quite popular and it is used by Microsoft Office, Yammer, Trello...
 
-We will create a simple model for creating notes.
-```typescript
-export class Note {
-  _id: string;
+## Installation and server code
 
-  title: string;
-  body: string;
+Altough this tutorial is provided in series, this specific tutorial is standalone so no previous code needs to be included. Let's start with server code and let's install all the necesarry libraries.
 
-  authorId: string;
-
-  createdAt: string;
-  updatedAt: string;
-}
+```bash
+npm install --save socket.io express
+npm install --save-dev @types/socket.io
 ```
 
-
-Code for mongoose.
+Initial server code:
 ```typescript
-import { model, Model, Schema } from 'mongoose';
-import { Note } from './note.model';
+import express from 'express';
+import { Server } from 'socket.io';
 
-const NoteSchema = new Schema<Note>(
-  {
-    _id: { type: String, required: true },
+const app = express();
 
-    title: { type: String, required: true },
-    body: { type: String, required: true },
+const server = app.listen(3000, () => {
+  console.log('Application started on port 3000!');
+});
 
-    authorId: { type: String, required: true },
+const socketIo = new Server(server, {
+  cors: {
+    origin: '*', // Allow any origin for testing purposes. This should be changed on production.
   },
-  { collection: 'note', timestamps: true }
-);
+});
 
-export const NoteModel: Model<Note> = model('note', NoteSchema);
-```
+socketIo.on('connection', (socket) => {
+  console.log('New connection created');
 
-We need to install class-validator library and add experimentalDecorators in tsconfig.json file
-```
-npm install --save class-validator
-```
+  // Get the auth token provided on handshake.
+  const token = socket.handshake.auth.token;
+  console.log('Auth token', token);
 
-```json
-{
-  "compilerOptions": {
-    "experimentalDecorators": true, // <- add this
-    "target": "es5",
-    "module": "commonjs",
-    "outDir": "./dist",
-    "rootDir": "./",
-    "baseUrl": "./",
-    "paths": {},
-    "esModuleInterop": true
-  }
-}
-
-```
-
-Now we can create models for validation and if we look at the code below, we will see that we have a couple of models.
-- `Note` is a basic model which is used for mongoose for creating its schema.
-- `NoteCreate` model is a model which is used to create data for MongoDB.
-- `NoteCreateAPI` is a validation model which is the data that we expect to come to the API.
-
-```typescript
-import { IsString, MaxLength, MinLength } from 'class-validator';
-
-// Actual model.
-export class Note {
-  _id: string;
-
-  title: string;
-  body: string;
-
-  authorId: string;
-
-  createdAt: string;
-  updatedAt: string;
-}
-
-// Model for creating item in database.
-export type NoteCreate = Pick<Note, '_id' | 'title' | 'body' | 'authorId'>;
-
-// Validation model which comes to the API.
-export class NoteCreateAPI implements Pick<Note, 'title' | 'body'> {
-  @IsString()
-  @MinLength(10)
-  @MaxLength(500)
-  title: string;
-
-  @IsString()
-  @MinLength(100)
-  @MaxLength(5_000)
-  body: string;
-}
-```
-
-If we look at the `NoteCreateAPI` model we will see that we picked only `title` and `body` properties which are required in order to create the note. We will focus only on the property `title`. We added 3 decorators:
-- @IsString() - value must be of type string.
-- @MinLength(10) - value must be at least 10 characters long.
-- @MaxLength(500) - value must be at most 500 characters long.
-
-I have added only some basic decorators but there is a great flexibility on how we want that model to look. More about what our model can look like and what parameters we can include we can see the documentation from the library: [class-validator documentation](https://www.npmjs.com/package/class-validator).
-
-We will now create a POST API method and send data to that route.
-
-NOTE: The route is protected with authMiddleware we created in one of the previous tutorials.
-
-```typescript
-app.post('/note', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
-  // data from the token that is verified
-  const noteNew = new NoteCreateAPI();
-  noteNew.title = req.body.title;
-  noteNew.body = req.body.body;
-
-  // verify input parameters
-  const errors = await validate(noteNew);
-  if (errors.length) {
-    next(new ErrorException(ErrorCode.ValidationError, errors));
+  try {
+    // Verify the token here and get user info from JWT token.
+  } catch (error) {
+    socket.disconnect(true);
   }
 
-  // create note data
-  const tokenData: { _id: string; email: string } = req.body.tokenData;
-  const noteCreate: NoteCreate = {
-    _id: ulid(),
-    title: noteNew.title,
-    body: noteNew.body,
+  // A client is disconnected.
+  socket.on('disconnect', () => {
+    console.log('A user disconnected');
+  });
 
-    authorId: tokenData._id,
-  };
+  // Read message recieved from client.
+  socket.on('message_from_client', (data) => {
+    console.log('message_from_client: ', data);
+  });
 
-  const created = await NoteModel.create(noteCreate);
-  res.send(created);
+  // Send a message to the connected client 5 seconds after the connection is created.
+  setTimeout(() => {
+    socket.emit('message_from_server', `Message: ${Math.random()}`);
+  }, 5_000);
+});
+```
+In the code snipet above we created an Express server on port 3000 and after that we created a Socket.IO server. `socketIo.on('connection', (socket)` is called when a new connection from the client side is initiated. This is called a handshake and the first step to do after this is to get the auth token from the client and verify it. If the JWT is malicius then we will disconnect the client and the client will not get any events from the server side and if the token is valid we can get the user data from the JWT.
+
+Sending data from client to server and vice versa is pretty simple.
+- For reading the data we are using `socket.on` either from client to server or from server to client.
+- For sending the data we are using `socket.emit` either from client to server or from server to client.
+In the code below we are reading the data from the client side and we are listening to the event `message_from_client`.
+```typescript
+socket.on('message_from_client', (data) => {
+  console.log('message_from_client: ', data);
+});
+```
+Whenever the client is emitting `socketIo.emit('message_from_client', 'Sent an event from the client!');` server will read the data in real time.
+
+In the code below we can see how we can send the data from the server to the client with event name `message_from_server`. Client listening on event `message_from_server` will read the data in real time.
+```typescript
+setTimeout(() => {
+  socket.emit('message_from_server', `Message: ${Math.random()}`);
+}, 5_000);
+```
+
+
+## Client code
+
+Let us create a simple html file with the following code. We will establish client communication with the server by pressing a button.
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Socket tutorial</title>
+  </head>
+  <body>
+    <button onclick="establishConnection()">Join</button>
+
+    <script
+      src="https://cdn.socket.io/3.1.3/socket.io.min.js"
+      integrity="sha384-cPwlPLvBTa3sKAgddT6krw0cJat7egBga3DJepJyrLl4Q9/5WLra3rrnMcyTyOnh"
+      crossorigin="anonymous"
+    ></script>
+    <script>
+      let isConnectionEstablished = false;
+
+      function establishConnection() {
+        if (isConnectionEstablished) {
+          return;
+        }
+
+        isConnectionEstablished = true;
+
+        const socketIo = io('http://localhost:3000', {
+          auth: {
+            token: 'json-web-token',
+          },
+        });
+
+        socketIo.on('connect', function () {
+          console.log('Made socket connection', socketIo.id);
+        });
+
+        socketIo.on('message_from_server', function (data) {
+          console.log('message_from_server data: ', data);
+        });
+
+        socketIo.on('disconnect', function () {
+          console.log('disconnect');
+        });
+
+        // Send a message to the server 3 seconds after initial connection.
+        setTimeout(function () {
+          socketIo.emit('message_from_client', 'Sent an event from the client!');
+        }, 3000);
+
+        socketIo.on('connect_error', function (err) {
+          console.log('connection errror', err);
+        });
+
+      }
+    </script>
+  </body>
+</html>
+```
+
+It is important to note that we provided the Socket.IO client library with script from CDN.
+```html
+<script
+  src="https://cdn.socket.io/3.1.3/socket.io.min.js"
+  integrity="sha384-cPwlPLvBTa3sKAgddT6krw0cJat7egBga3DJepJyrLl4Q9/5WLra3rrnMcyTyOnh"
+  crossorigin="anonymous"
+></script>
+```
+
+Creating a communication channel by sending a token which is required for validating the user.
+```javascript
+const socketIo = io('http://localhost:3000', {
+  auth: {
+    token: 'json-web-token',
+  },
 });
 ```
 
-Now that everything is prepared, we can check what happens when we send data which is not valid and when we send data which is valid.
+Code for reading messages from from the server on event `message_from_server`:
+```javascript
+socketIo.on('message_from_server', function (data) {
+  console.log('message_from_server data: ', data);
+});
+```
 
-If we look at `Example 1` we will see that the field `title` field is missing and that field `body` is missing the character length.
-![Example 1](https://raw.githubusercontent.com/nisicadmir/nodejs-typescript/master/tutorial-4/example_1.png "Example 1")
+Code for sending the data from the client to the server:
+```javascript
+setTimeout(function () {
+  socketIo.emit('message_from_client', 'Sent an event from the client!');
+}, 3000);
+```
 
-In `Example 2` we can see that the field `title` is present but the character lenght is not met, same is with field `body`.
-![Example 2](https://github.com/nisicadmir/nodejs-typescript/blob/master/tutorial-4/example_2.png?raw=true "Example 2")
+## Run the application
+On the server side add script for running the server in package.json file:
+```json
+"scripts": {
+  "start": "ts-node src/server.ts"
+},
+```
 
-Finally in `Example 3` we can see that both `title` and `body` meet the requirements and that we have successfully created a note.
-![Example 3](https://github.com/nisicadmir/nodejs-typescript/blob/master/tutorial-4/example_3.png?raw=true "Example 3")
+Now let's run the Node.js application with:
+```bash
+npm run start
+```
+
+Now we can open the index.html file in any browser. You should be able to see a 'Join' button as shown in image `Image 1 - client`.
+![Image 1 - client](https://github.com/nisicadmir/nodejs-typescript/blob/master/tutorial-5/example_1.png?raw=true "Image 1 - client")
+
+Open the console on the browser and after that click the 'Join' button you should be able to see that the server is emitting data to the client as seen in `Image 2 - client console`
+![Image 2 - client console](https://github.com/nisicadmir/nodejs-typescript/blob/master/tutorial-5/example_2.png?raw=true "Image 2 - client console")
+
+If you look at the terminal on server code you should be able to see the client is emitting the data to the server as seen in image `Image 3 - server terminal`
+![Image 3 - server terminal](https://github.com/nisicadmir/nodejs-typescript/blob/master/tutorial-5/example_3.png?raw=true "Image 3 - server terminal")
+
+
+## Rooms
+From time to time it is necessary to separate certain users so that we can only send events to specific users. One good example of how rooms can be used is a chat room. A chat room can be made for one or more people and only users who are in a particular room can receive the specific events.
+
+Updated server code with rooms.
+```typescript
+socketIo.on('connection', (socket) => {
+  console.log('New connection created');
+
+  const token = socket.handshake.auth.token;
+  console.log('Auth token', token);
+
+  try {
+    // Verify the token here and get user info from JWT token.
+  } catch (error) {
+    socket.disconnect(true);
+  }
+
+  // A client is disconnected.
+  socket.on('disconnect', () => {
+    console.log('A user disconnected');
+  });
+
+  // Read message recieved from client.
+  socket.on('message_from_client', (data) => {
+    console.log('message_from_client: ', data);
+  });
+
+  // Send a message to the connected client 5 seconds after the connection is created.
+  setTimeout(() => {
+    socket.emit('message_from_server', `Message: ${Math.random()}`);
+  }, 5_000);
+
+  /**
+    * New code
+    */
+  // Get the room number from the client.
+  const roomNumber: string = socket.handshake.query.roomNumber as string;
+  // Join room for specific users.
+  const room = `room-userId-${roomNumber}`;
+  socket.join(room);
+
+  // Emit to room by room number.
+  setTimeout(() => {
+    socketIo.to(room).emit('room-userId', `You are in room number: ${roomNumber}`);
+  }, 2_000);
+});
+```
+
+The idea is to get the room number from the client and join specific users to specific rooms. After a user joins a specific room he will recieve events whenever we emit data to specific rooms.
+```typescript
+// Get the room number from the client.
+const roomNumber: string = socket.handshake.query.roomNumber as string;
+// Join room for specific users.
+const room = `room-userId-${roomNumber}`;
+socket.join(room);
+
+// Emit to room by room number.
+setTimeout(() => {
+  socketIo.to(room).emit('room-userId', `You are in room number: ${roomNumber}`);
+}, 2_000);
+```
+
+
+On the client side, let's add input where users will be able to enter a room number and send the room number to the server side after the user presses the join button.
+```html
+<!-- Add text input field next to 'Join' button -->
+<input type="text" placeholder="Room number" id="roomId" />
+<button onclick="functionToExecute()">Join</button>
+```
+```javascript
+// Update connection for Socket.
+const socketIo = io('http://localhost:3000', {
+  auth: {
+    token: 'json-web-token',
+  },
+  query: {
+    roomNumber: document.getElementById('roomId').value, // <- new code
+  },
+});
+```
+
+Now let's open two tabs of the client application and let's join the same room. People from the same room will always see when someone joins the room as shown in the image `Image 4 - joining the rooms`
+![Image 4 - joining the rooms](https://github.com/nisicadmir/nodejs-typescript/blob/master/tutorial-5/example_4.png?raw=true "Image 4 - joining the rooms")
 
 
 # Wrapping up
-In this tutorial we learned why it is important to have a validator in our application and we briefly looked at which libraries we can use in the Node.js application. We mentioned why I chose the class-validator library and finally created the code implementation that demonstrates a couple of examples of failed and one example of successful validation.
+In this tutorial we learned what are websockets and what are the advantages of using websockets instead of HTTP for real time communication and we learned that the Socket.IO is most popular option for using websockets with Node.js. Socket.IO is widely used by most popular companies like Microsoft, Trello etc. We learned how to create an Express server using Socket.IO and how to use it in client side. We learned how to send JWT tokens on Socket.IO handshake and how to send any additional data while initial communication is created. We also saw what the benefits are and why rooms in Socket.IO are used for.
