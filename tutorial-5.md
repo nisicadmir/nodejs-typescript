@@ -198,13 +198,13 @@ npm run start
 ```
 
 Now we can open the index.html file in any browser. You should be able to see a 'Join' button as shown in image `Image 1 - client`.
-![Image 1 - client](https://github.com/nisicadmir/nodejs-typescript/blob/master/tutorial-5/example_1.png?raw=true "Image 1 - client")
+![Image 1 - client](https://raw.githubusercontent.com/nisicadmir/nodejs-typescript/master/tutorial-5/image_1.png "Image 1 - client")
 
 Open the console on the browser and after that click the 'Join' button you should be able to see that the server is emitting data to the client as seen in `Image 2 - client console`
-![Image 2 - client console](https://github.com/nisicadmir/nodejs-typescript/blob/master/tutorial-5/example_2.png?raw=true "Image 2 - client console")
+![Image 2 - client console](https://raw.githubusercontent.com/nisicadmir/nodejs-typescript/master/tutorial-5/image_2.png "Image 2 - client console")
 
 If you look at the terminal on server code you should be able to see the client is emitting the data to the server as seen in image `Image 3 - server terminal`
-![Image 3 - server terminal](https://github.com/nisicadmir/nodejs-typescript/blob/master/tutorial-5/example_3.png?raw=true "Image 3 - server terminal")
+![Image 3 - server terminal](https://raw.githubusercontent.com/nisicadmir/nodejs-typescript/master/tutorial-5/image_3.png "Image 3 - server terminal")
 
 
 ## Rooms
@@ -289,7 +289,7 @@ const socketIo = io('http://localhost:3000', {
 ```
 
 Now let's open two tabs of the client application and let's join the same room. People from the same room will always see when someone joins the room as shown in the image `Image 4 - joining the rooms`
-![Image 4 - joining the rooms](https://github.com/nisicadmir/nodejs-typescript/blob/master/tutorial-5/example_4.png?raw=true "Image 4 - joining the rooms")
+![Image 4 - joining the rooms](https://raw.githubusercontent.com/nisicadmir/nodejs-typescript/master/tutorial-5/image_4.png "Image 4 - joining the rooms")
 
 
 # Wrapping up
