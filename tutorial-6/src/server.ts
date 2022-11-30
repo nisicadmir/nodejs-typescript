@@ -8,16 +8,9 @@ const kafka = new Kafka({
 });
 
 const producer = kafka.producer();
-
 producer.connect();
 
 const app = express();
-app.use(
-  express.urlencoded({
-    extended: true,
-  })
-);
-app.use(express.json());
 
 app.get('/', (req: Request, res: Response) => {
   res.send('Application works!');
@@ -25,7 +18,7 @@ app.get('/', (req: Request, res: Response) => {
 
 app.get('/send', async (req: Request, res: Response) => {
   await producer.send({
-    topic: 'topic-test-1',
+    topic: 'topic-test-1', // topic name
     messages: [{ value: 'Hello KafkaJS user!' + Math.random().toString() }],
   });
 
