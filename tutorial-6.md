@@ -9,7 +9,7 @@ On the other hand, microservice architecture is an approach for building applica
 
 So, considering that the microservice architecture is composed of several independent small services, it is necessary for these services to communicate with each other, and now we are entering into the story with message brokers.
 
-# Message brokers and Kafka
+## Message brokers and Kafka
 By IBM message brokers are an inter-application communication technology to help build a common integration mechanism to support cloud native, microservices-based, serverless and hybrid cloud architectures.
 
 There are a couple of message brokers available and the most popular are Kafka, Redis pub/sub and RabbitMQ.
