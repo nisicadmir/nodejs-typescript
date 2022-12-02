@@ -17,15 +17,14 @@ There are a couple of message brokers available and the most popular are Kafka, 
 Let's briefly talk about communication between one-to-one and one-to-many instances. As I already said in the introduction, the good thing about microservice architecture is that horizontal scalability is possible, which means that we can run one service on several machines in order to have faster data processing. Let's imagine for a moment that we have `service-a` that needs to send data to `service-b`. If service-b is available on 2 machines and we need service-a to send data to only one service-b instance. Kafka and RabbitMQ are offering instance discovery out-of-the-box, while Redis does not offer service discovery but instead Redis we will send data to both instances of service-b.
 Some frameworks such as Moleculer have built-in node (service) discovery, which is in charge of knowing at all times which services are available and which are not, so that the framework itself knows to which instances it is possible to send data.
 
-What needs to be emphasized is that Kafka has the ability to store messages that are sent between instances. If `service-a` sent a message to `service-b` but service-b was not available for any reason, the message was already saved and the destination did not recieve the message. When service-b becomes online again, then the service will start receiving messages that were in the queue and that did not arrive at the destination, and this ensures that messages are delivered to the destination. So, Kafka has the ability to save data and the amount of data to be saved can be set via configuration. Redis, on the other hand, when a service sends a message, only those services that are subscribed at that moment will receive the data.
+What needs to be emphasized is that Kafka has the ability to store messages that are sent between instances. If `service-a` sent a message to `service-b` but service-b was not available for any reason, the message was already saved and the destination did not recieve the message. When service-b becomes online again, then the service will start receiving messages that were in the queue and that did not arrive at the destination. So, Kafka has the ability to save data and the amount of data to be saved can be set via configuration. Redis, on the other hand, when a service sends a message, only those services that are subscribed at that moment will receive the data.
 
 ## Kafka
-Apache Kafka is a very popular open-source tool and it is a distributed event streaming platform used for high-performance data pipelines, streaming analytics. Advantages of using kafka are:
+Apache Kafka is a very popular open-source tool and it is a distributed event streaming platform used for high-performance data pipelines, streaming analytics, communication between microservice instances and more. Advantages of using kafka are:
 - Apache Kafka offers low latency value.
 - Kafka is able to handle more number of messages of high volume and high velocity.
 - Kafka has an essential feature to provide resistant to node/machine failure within the cluster.
 - Apache Kafka contains a distributed architecture which makes it scalable.
--
 
 Now let's clarify terms that are often used when working with Kafka and those terms are producer, consumer and topic.
 The Producer API allows applications to send streams of data to topics.
@@ -62,7 +61,7 @@ const kafka = new Kafka({
 });
 ```
 
-If you look at the code snippet above, you'll see `brokers: ['kafka:9092']`. With this part of code we will connect to url `kafka` and port `9092`. Since in this case the host is kafka and not localhost, it is necessary to create a proxy that will redirect the network from kafka to localhost. We can achieve this by adding `127.0.0.1 kafka` in the file `etc/hosts`
+If we look at the code snippet above, we'll see `brokers: ['kafka:9092']`. With this part of code we will connect to url `kafka` and port `9092`. Since in this case the host is kafka and not localhost, it is necessary to create a proxy that will redirect the network from kafka to localhost. We can achieve this by adding `127.0.0.1 kafka` in the file `etc/hosts`
 ```
 # file /etc/hosts
 127.0.0.1 kafka
@@ -108,8 +107,8 @@ In package.json add script for running the consumer.
 "start:consumer": "npx ts-node ./src/consumer/index.ts"
 ```
 
-There is one more step before we start the application. Let's create a topic on Kafka called `topic-test-1` with 2 partitions.
-Creating a topic can be done in several ways, and in this tutorial I will show you how to create a topic via the `command line tool` and via the `Kafka UI` container that we launched via Docker.
+There is one more step before we start the application. Let's create a topic on Kafka called `topic-test-1` with two partitions.
+Creating a topic can be done in several ways, and in this tutorial I will show you how to create a topic via the `command line tool` and via the `Kafka UI` container that we created via Docker.
 
 - With UI
 Visit `http://localhost:7000` which should open the application for Kafka UI. Go to topics and create a new topic with name `topic-test-1` and it should have two partitions.
@@ -132,15 +131,15 @@ Now let's start the server so that the producer can send messages to the topic.
 npm run start
 ```
 
-Now let's start t wo consumers in two different terminals.
+Now let's start two consumers in two different terminals.
 ```
 npm run start:consumer
 ```
 
 Now it is necessary to send a GET request to the endpoint `http://localhost:3000/send`. Let's do it with the help of curl with the command `curl localhost:3000/send`
-![Image 4 - Application](https://raw.githubusercontent.com/nisicadmir/nodejs-typescript/master/tutorial-6/images/image_4.png "Image 4 - Application")
+![Image 4 - running application](https://raw.githubusercontent.com/nisicadmir/nodejs-typescript/master/tutorial-6/images/image_4.png "Image 4 - running application")
 
-I have sent three requests and in the image above we can see that we have 2 consumers running and the first consumer recieved one message and the second consumer recieved two messages. If we add another instance of consumer then one of three instances will be disconnected from Kafka and will not recieve any message while the other two will still be recieving the messages. If we have only one instance then one instance will start recieveing all the messages that are sent to topic `topic-test-1`.
+I have sent three requests and in the image above we can see that we have two consumers running and the first consumer recieved one message and the second consumer recieved two messages. If we add another instance of consumer then one of three instances will be disconnected from Kafka and will not recieve any message while the other two will still be recieving the messages. If we have only one instance then one instance will start recieveing all the messages that are sent to topic `topic-test-1`.
 
 # Wrapping up
 In this tutorial we talked about the differences between monolithic application and microservice architecture and what are the advanteges of using microsevice architecture. We talked briefly about what a message broker is, which are the popular message brokers and what are the differences between them. We also talked briefly about Kafka and what are the benefits of using it. And finally, we demonstrated how to use Kafka in a Node.js application. We showed how to connect to Kafka, how to send data via producer API and how to read data on two instances via consumer API.
