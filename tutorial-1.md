@@ -164,45 +164,44 @@ NOTE: Prettier can be used also to automatically format your code (which I prefe
 Install dependencies:
 
 ```
-npm install --save-dev eslint eslint-config-prettier eslint-plugin-prettier @typescript-eslint/parser @typescript-eslint/eslint-plugin prettier
+npm install --save-dev eslint eslint-config-prettier eslint-plugin-prettier @typescript-eslint/parser @typescript-eslint/eslint-plugin prettier @eslint/js typescript-eslint
 ```
 
-ESLint also uses configuration file. For this purpose create .eslintrc.json file in root directory. We can arrange rules to our needs.
+ESLint also uses configuration file. For this purpose create `eslint.config.mjs` file in root directory. We can arrange rules to our needs.
 
 ```json
-{
-  "root": true,
-  "ignorePatterns": [],
-  "overrides": [
-    {
-      "files": ["*.ts"],
-      "parserOptions": {
-        "project": ["tsconfig.json"],
-        "createDefaultProgram": true
-      },
-      "extends": ["plugin:@typescript-eslint/recommended", "plugin:prettier/recommended"],
-      "rules": {
-        "max-len": "off",
-        "no-underscore-dangle": "off",
-        "arrow-body-style": "off",
-        "@typescript-eslint/no-explicit-any": "off",
-        "@typescript-eslint/no-unsafe-assignment": "off",
-        "@typescript-eslint/no-unsafe-member-access": "off",
-        "@typescript-eslint/no-unsafe-call": "off",
-        "@typescript-eslint/unbound-method": "off",
-        "@typescript-eslint/no-floating-promises": "off",
-        "@typescript-eslint/explicit-module-boundary-types": "off",
-        "@typescript-eslint/no-unused-vars": "off",
-        "@typescript-eslint/naming-convention": "off",
-        "@typescript-eslint/no-unsafe-return": "off",
-        "@typescript-eslint/no-empty-function": "off",
-        "@typescript-eslint/no-inferrable-types": "off",
-        "@typescript-eslint/restrict-template-expressions": "warn",
-        "jsdoc/newline-after-description": "off"
-      }
-    }
-  ]
-}
+import globals from 'globals';
+import pluginJs from '@eslint/js';
+import tseslint from 'typescript-eslint';
+import prettier from 'eslint-plugin-prettier';
+import prettierConfig from 'eslint-config-prettier';
+
+/** @type {import('eslint').Linter.Config[]} */
+export default [
+  { ignores: ['dist/**'] },
+  { files: ['**/*.{ts}'] },
+  {
+    languageOptions: {
+      globals: globals.browser,
+    },
+  },
+  pluginJs.configs.recommended,
+  ...tseslint.configs.recommended,
+  prettierConfig, // Disables ESLint rules that conflict with Prettier
+  {
+    plugins: {
+      prettier,
+    },
+    rules: {
+      'prettier/prettier': 'error', // Treat Prettier errors as ESLint errors
+      'max-len': 'off',
+      'no-underscore-dangle': 'off',
+      'arrow-body-style': 'off',
+      'jsdoc/newline-after-description': 'off',
+    },
+  },
+];
+
 ```
 
 If we need to ignore any folder/file for ESLint then add .eslintignore file inside root directory with configuration. For demonstration purpose I added the file with content.
