@@ -42,13 +42,13 @@ These are all the dependencies that needs to be installed in order to run an Exp
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "express": "^4.17.1"
+    "express": "^5.1.0"
   },
   "devDependencies": {
-    "@types/express": "^4.17.12",
-    "@types/node": "^15.6.2",
-    "ts-node": "^10.0.0",
-    "typescript": "^4.3.2"
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.1.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
   }
 }
 
@@ -65,12 +65,13 @@ A file called tsconfig.json will be created which holds the configuration for Ty
 ```json
 {
   "compilerOptions": {
-    "target": "es5",
+    "target": "es2016",
     "module": "commonjs",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
     "outDir": "./dist",
-    "rootDir": "./",
-    "baseUrl": "./",
-    "esModuleInterop": true
+    "rootDir": "./src",
+    "baseUrl": "./"
   }
 }
 
@@ -111,9 +112,9 @@ Now we are ready to start and build our project. We are going to add scripts for
 
 ```json
 "scripts": {
-  "start": "ts-node ./src/server.ts",
-  "start:prod": "npm run build && node ./dist/src/server.js",
-  "build": "npx tsc"
+    "start": "ts-node ./src/server.ts",
+    "start:prod": "npm run build && node ./dist/server.js",
+    "build": "npx tsc"
 },
 ```
 
@@ -150,7 +151,7 @@ Create nodemon.json configuration file inside root directory.
 Remove the comments of course. Add additional script for nodemon inside package.json scripts.
 
 ```
-"start:nodemon": "./node_modules/nodemon/bin/nodemon.js",
+"start:nodemon": "nodemon --exec ts-node ./src/server.ts",
 ```
 
 Now we can start watching the application with command `npm run start:nodemon`. Application will be restarted after we change any TypeScript file inside `src` folder.
