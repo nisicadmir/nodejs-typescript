@@ -154,7 +154,7 @@ app.listen(3000, () => {
 });
 ```
 
-Now we are ready to throw some errors.
+Now we are ready to throw some errors. Adjust the imports as needed.
 
 ```typescript
 app.get('/throw-unauthenticated', (req: Request, res: Response, next: NextFunction) => {
@@ -173,6 +173,7 @@ app.get('/throw-unknown-error', (req: Request, res: Response, next: NextFunction
   console.log(num.length);
 });
 ```
+Add `/* eslint-disable @typescript-eslint/no-unused-vars */` at the top of the file to ignore linter errors for not using variables like `req: Request`
 
 If you look at the code above, you will see that we have 2 `known` exceptions and one `unknown`. When we want to throw an exception from a route we can do it with the `throw` keyword or by calling the `next` function with an actual exception. Error handler will catch both exceptions. However, when it comes to async logic then it will be solved in another way which we will cover next.
 
@@ -188,7 +189,7 @@ app.get('/', function (req, res) {
 });
 ```
 
-Handling async code:
+Handling async code in Express version 4:
 `For errors returned from asynchronous functions invoked by route handlers and middleware, you must pass them to the next() function, where Express will catch and process them. For example:`
 
 ```typescript
@@ -226,16 +227,17 @@ const someOtherFunction = () => {
 };
 app.get('/throw-async-await-error', async (req: Request, res: Response, next: NextFunction) => {
   // express 4
-  try {
-    await someOtherFunction();
-  } catch (err) {
-    next(err);
-    // next line will not work as expected
-    // throw err
-  }
+  // try {
+  //   await someOtherFunction();
+  // } catch (err) {
+  //   next(err);
+  //   // next line will not work as expected
+  //   // throw err
+  // }
   // express 5
-  // await someOtherFunction();
+  await someOtherFunction();
 });
+
 ```
 
 # Wrapping up

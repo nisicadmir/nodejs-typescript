@@ -1,8 +1,10 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import express, { NextFunction } from 'express';
 import { Request, Response } from 'express';
-import { ErrorCode } from './error-handler/error-code';
-import { ErrorException } from './error-handler/error-exception';
 import { errorHandler } from './error-handler/error-handler';
+import { ErrorException } from './error-handler/error-exception';
+import { ErrorCode } from './error-handler/error-code';
 
 const app = express();
 
@@ -36,15 +38,15 @@ const someOtherFunction = () => {
 };
 app.get('/throw-async-await-error', async (req: Request, res: Response, next: NextFunction) => {
   // express 4
-  try {
-    await someOtherFunction();
-  } catch (err) {
-    next(err);
-    // next line will not work as expected
-    // throw err
-  }
+  // try {
+  //   await someOtherFunction();
+  // } catch (err) {
+  //   next(err);
+  //   // next line will not work as expected
+  //   // throw err
+  // }
   // express 5
-  // await someOtherFunction();
+  await someOtherFunction();
 });
 
 app.use(errorHandler); // registration of handler

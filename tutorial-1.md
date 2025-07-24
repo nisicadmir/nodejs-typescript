@@ -198,6 +198,7 @@ export default [
       'no-underscore-dangle': 'off',
       'arrow-body-style': 'off',
       'jsdoc/newline-after-description': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
     },
   },
 ];
