@@ -1,3 +1,4 @@
+![Alt Text](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/yvaq7n6480njnahy829w.jpeg)
 [Github repository](https://github.com/nisicadmir/nodejs-typescript)
 
 Why do we need error handling at all?
@@ -244,3 +245,4 @@ app.get('/throw-async-await-error', async (req: Request, res: Response, next: Ne
 In this tutorial we covered what exceptions are and how to throw an exception in application. We learned what we need to consider when handling exceptions in multi language applications. We learned to do everything necessary for the Node.JS application to successfully manage exceptions from creating necessary classes to creating a handler and registering it. And finally we learned how to throw exceptions and what to take care of when throwing exceptions in async or sync blocks.
 
 Comming up: Authentication with JWT.
+
