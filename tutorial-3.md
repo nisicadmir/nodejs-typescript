@@ -18,6 +18,7 @@ npm install --save-dev @types/mongoose
 ```
 
 After the packages are installed, we can start making the model. We will create a model for the user who will have the fields _id, email, name and password. We will also create a unique email index so that there are no two users with the same email in our database.
+We will create the `user.db.ts` file in folder `src/models/user`.
 
 ```typescript
 import { model, Model, Schema } from 'mongoose';
@@ -47,7 +48,7 @@ const IUserSchema = new Schema<IUser>(
 
 export const UserModel: Model<IUser> = model('user', IUserSchema);
 ```
-Now lets create a connection to the MongoDB database via mongoose.
+Now lets create a connection to the MongoDB database via mongoose. We will call the file `mongoose.index.ts` and place it folder`src/models`.
 > Note: We need to have a MongoDB database running in order to connect to it. If you use docker you can find the `docker-compose.yml` file on github which link is provided in this tutorial and just run `docker-compose up -d`.
 
 ```typescript
@@ -87,6 +88,7 @@ Now in the `server.ts` file we can call the method for connecting to the databas
 ```typescript
 connect();
 ```
+Align the imports for `connect` function.
 
 If the application is successfully connected to the database then we should get the messages from log:
 ```bash
@@ -140,7 +142,7 @@ app.use(
 app.use(express.json());
 ```
 
-We used the bcrypt library to create a hash from a plain password. The code for hashing and comparing plain and hashed passwords:
+We used the bcrypt library to create a hash from a plain password. Create a file `crypto.lib.ts` in a new folder `src/lib`. The code for hashing and comparing plain and hashed passwords:
 ```typescript
 import bcrypt from 'bcrypt';
 
@@ -157,6 +159,31 @@ export const comparePassword = (plainPassword: string, passwordHash: string): bo
 In the code above, you can see that we have two functions. The `passwordHash` function will hash a plain password.
 The `comparePassword` function will check that the plain password entered is the same as the hash from the database. We will need this method later for the login form.
 
+Additional steps:
+- align imports
+```typescript
+import express, { NextFunction } from 'express';
+import { Request, Response } from 'express';
+import { errorHandler } from './error-handler/error-handler';
+import { ErrorException } from './error-handler/error-exception';
+import { ErrorCode } from './error-handler/error-code';
+import { connect } from './models/mongoose.index';
+import { IUser, UserModel } from './models/user/user.db'; // <- new import
+import { passwordHash } from './lib/crypto.lib'; // <- new import
+import { ulid } from 'ulid'; // <- new import
+```
+- add new enum value `ErrorCode.DuplicateEntityError`
+```typescript
+export class ErrorCode {
+  public static readonly Unauthenticated = 'Unauthenticated';
+  public static readonly NotFound = 'NotFound';
+  public static readonly MaximumAllowedGrade = 'MaximumAllowedGrade';
+  public static readonly AsyncError = 'AsyncError';
+  public static readonly DuplicateEntityError = 'DuplicateEntityError'; // <- new enum value
+  public static readonly UnknownError = 'UnknownError';
+}
+```
+
 If we have successfully created a user in the database, the next step is to create a JWT when the user tries to sign in.
 
 ## Sign in process
@@ -171,6 +198,34 @@ Actually how does it work? It is necessary to create a route for sign in where i
 We will first check if there is a user with the provided email and if there is one, then we will take the password hash that is saved in the database. It is necessary to check whether the plain password from the login form agrees with the hash password from the database using the `comparePassword` method. If the method returns true then the user has entered a good password, otherwise the method will return false.
 
 After that, it is necessary to generate jsonwebtoken through the mentioned library. We will generate the JWT with the help of a secret key which we keep in our application and the client should not be aware of the secret key. We will generate that jsonwebtoken string and return that token to the client application.
+
+Create new file `auth.lib.ts` inside `src/lib` folder with following code:
+```typescript
+import { IUser } from '../models/user/user.db';
+import jwt from 'jsonwebtoken';
+import { ErrorException } from '../error-handler/error-exception';
+import { ErrorCode } from '../error-handler/error-code';
+
+const jwtKey = 'keyyyy';
+
+export const generateAuthToken = (user: IUser): string => {
+  const token = jwt.sign({ _id: user._id, email: user.email }, jwtKey, {
+    expiresIn: '2h',
+  });
+
+  return token;
+};
+
+export const verifyToken = (token: string): { _id: string; email: string } => {
+  try {
+    const tokenData = jwt.verify(token, jwtKey);
+    return tokenData as { _id: string; email: string };
+  } catch (error) {
+    console.error('Error verifying token', error);
+    throw new ErrorException(ErrorCode.Unauthenticated);
+  }
+};
+```
 
 ```typescript
 app.post('/sign-in', async (req: Request, res: Response, next: NextFunction) => {
@@ -194,35 +249,41 @@ app.post('/sign-in', async (req: Request, res: Response, next: NextFunction) => 
 });
 ```
 
-Code for JWT helper:
+Additional steps:
+- align imports in `server.ts` file
 ```typescript
-import { IUser } from '../models/db/user.db';
-import jwt from 'jsonwebtoken';
-import { ErrorException } from '../error-handler/error-exception';
+...
+import { ulid } from 'ulid';
+import { generateAuthToken } from './lib/auth.lib'; // <- new import
+```
+
+## Authentication middleware
+We will create one middleware called `authMiddleware` which we will put on the routes where we need to have protection and whose job will be to check if the JWT that was generated is valid. `authMiddleware` function is just a middleware function which will get a token from the header and check its validation. We can check the validation of the token with the function `verifyToken` which is placed inside our middleware. We will create file `auth.middleware.ts` inside `src/middlewares` folder.
+
+```typescript
+import { Request, Response, NextFunction } from 'express';
 import { ErrorCode } from '../error-handler/error-code';
+import { ErrorException } from '../error-handler/error-exception';
+import { verifyToken } from '../lib/auth.lib';
 
-const jwtKey = 'keyyyy';
+export const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
+  const auth = req.headers.authorization;
+  if (auth && auth.startsWith('Bearer')) {
+    const token = auth.slice(7);
 
-export const generateAuthToken = (user: IUser): string => {
-  const token = jwt.sign({ _id: user._id, email: user.email }, jwtKey, {
-    expiresIn: '2h',
-  });
-
-  return token;
-};
-
-export const verifyToken = (token: string): { _id: string; email: string } => {
-  try {
-    const tokenData = jwt.verify(token, jwtKey);
-    return tokenData as { _id: string; email: string };
-  } catch (error) {
+    try {
+      const tokenData = verifyToken(token);
+      req.body.tokenData = tokenData;
+      next();
+    } catch (error) {
+      console.error('Error verifying token', error);
+      throw new ErrorException(ErrorCode.Unauthenticated);
+    }
+  } else {
     throw new ErrorException(ErrorCode.Unauthenticated);
   }
 };
 ```
-
-## Authentication middleware
-We will create one middleware called `authMiddleware` which we will put on the routes where we need to have protection and whose job will be to check if the JWT that was generated is valid. `authMiddleware` function is just a middleware function which will get a token from the header and check its validation. We can check the validation of the token with the function `verifyToken` which is placed inside our middleware.
 
 The client side is required to send the JWT token string in the header for each API call that requires authentication. Header with authorization token looks like:
 ```bash
@@ -238,32 +299,8 @@ app.get('/protected-route', authMiddleware, (req: Request, res: Response, next: 
   res.send('this is a protected route');
 });
 ```
+Align the imports in `server.ts`
 
-The middleware itself:
-```typescript
-import { Request, Response, NextFunction } from 'express';
-import { ErrorCode } from '../error-handler/error-code';
-import { ErrorException } from '../error-handler/error-exception';
-import { verifyToken } from './jwt';
-
-export const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
-  const auth = req.headers.authorization;
-  if (auth && auth.startsWith('Bearer')) {
-    const token = auth.slice(7);
-
-    try {
-      const tokenData = verifyToken(token);
-      req.body.tokenData = tokenData;
-      next();
-    } catch (error) {
-      throw new ErrorException(ErrorCode.Unauthenticated);
-    }
-  } else {
-    throw new ErrorException(ErrorCode.Unauthenticated);
-  }
-};
-
-```
 
 # Wrapping up
 In this tutorial we covered how to create basic models with `mongoose` and `MongoDB` and how to connect to MongoDB instances. We also learned how to create a new user and save the user in the database and what is important, how to create a hash password using the `bcrypt` library. After saving the user, we showed how to create a sign in process and generate a token using the `jsonwebtoken` library. Finally, we demonstrated how to create one middleware to be placed on a route to protect certain routes.

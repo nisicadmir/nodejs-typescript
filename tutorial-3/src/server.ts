@@ -5,8 +5,24 @@ import { Request, Response } from 'express';
 import { errorHandler } from './error-handler/error-handler';
 import { ErrorException } from './error-handler/error-exception';
 import { ErrorCode } from './error-handler/error-code';
+import { connect } from './models/mongoose.index';
+import { IUser, UserModel } from './models/user/user.db';
+import { comparePassword, passwordHash } from './lib/crypto.lib';
+import { ulid } from 'ulid';
+import { generateAuthToken } from './lib/auth.lib';
+import { authMiddleware } from './middlewares/auth.middleware';
 
 const app = express();
+
+app.use(
+  express.urlencoded({
+    extended: true,
+  })
+);
+
+app.use(express.json());
+
+connect();
 
 app.get('/', (req: Request, res: Response) => {
   res.send('Application works!');
@@ -47,6 +63,53 @@ app.get('/throw-async-await-error', async (req: Request, res: Response, next: Ne
   // }
   // express 5
   await someOtherFunction();
+});
+
+app.post('/sign-up', async (req: Request, res: Response, next: NextFunction) => {
+  const { email, name, password } = req.body;
+  // check if user exists
+  const userExists = await UserModel.findOne({ email: email });
+  if (userExists) {
+    next(new ErrorException(ErrorCode.DuplicateEntityError, { email }));
+  }
+
+  // generate password hash
+  const hash = passwordHash(password);
+  const newUser: IUser = {
+    _id: ulid(),
+    email,
+    name,
+    password: hash,
+  };
+  await UserModel.create(newUser);
+  res.send({ done: true });
+});
+
+app.post('/sign-in', async (req: Request, res: Response, next: NextFunction) => {
+  const { email, password } = req.body;
+  // check if user exists
+  const userExists = await UserModel.findOne({ email: email });
+  if (!userExists) {
+    next(new ErrorException(ErrorCode.Unauthenticated));
+  }
+
+  // validate the password
+  const validPassword = comparePassword(password, userExists.password);
+  if (!validPassword) {
+    next(new ErrorException(ErrorCode.Unauthenticated));
+  }
+
+  // generate the token
+  const token = generateAuthToken(userExists);
+
+  res.send({ token });
+});
+
+app.get('/protected-route', authMiddleware, (req: Request, res: Response, next: NextFunction) => {
+  // data from the token that is verified
+  const tokenData = req.body.tokenData;
+  console.log('tokenData', tokenData);
+  res.send('this is a protected route');
 });
 
 app.use(errorHandler); // registration of handler
