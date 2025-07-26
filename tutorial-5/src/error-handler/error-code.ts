@@ -5,6 +5,5 @@ export class ErrorCode {
   public static readonly AsyncError = 'AsyncError';
   public static readonly DuplicateEntityError = 'DuplicateEntityError';
   public static readonly ValidationError = 'ValidationError';
-
   public static readonly UnknownError = 'UnknownError';
 }

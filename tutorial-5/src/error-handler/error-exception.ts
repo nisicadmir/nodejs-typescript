@@ -14,12 +14,13 @@ export class ErrorException extends Error {
         this.status = 401;
         break;
       case ErrorCode.MaximumAllowedGrade:
-      case ErrorCode.DuplicateEntityError:
-      case ErrorCode.ValidationError:
         this.status = 400;
         break;
       case ErrorCode.AsyncError:
         this.status = 400;
+        break;
+      case ErrorCode.ValidationError:
+        this.status = 422;
         break;
       case ErrorCode.NotFound:
         this.status = 404;

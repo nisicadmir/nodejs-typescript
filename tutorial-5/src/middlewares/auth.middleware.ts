@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { ErrorCode } from '../error-handler/error-code';
 import { ErrorException } from '../error-handler/error-exception';
-import { verifyToken } from './jwt';
+import { verifyToken } from '../lib/auth.lib';
 
 export const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
   const auth = req.headers.authorization;
@@ -13,6 +13,7 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
       req.body.tokenData = tokenData;
       next();
     } catch (error) {
+      console.error('Error verifying token', error);
       throw new ErrorException(ErrorCode.Unauthenticated);
     }
   } else {
