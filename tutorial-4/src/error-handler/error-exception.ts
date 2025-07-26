@@ -14,8 +14,6 @@ export class ErrorException extends Error {
         this.status = 401;
         break;
       case ErrorCode.MaximumAllowedGrade:
-      case ErrorCode.DuplicateEntityError:
-      case ErrorCode.ValidationError:
         this.status = 400;
         break;
       case ErrorCode.AsyncError:

@@ -1,12 +1,11 @@
 {
   "compilerOptions": {
-    "experimentalDecorators": true,
-    "target": "es5",
+    "target": "es2016",
     "module": "commonjs",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
     "outDir": "./dist",
-    "rootDir": "./",
-    "baseUrl": "./",
-    "paths": {},
-    "esModuleInterop": true
+    "rootDir": "./src",
+    "baseUrl": "./"
   }
 }

@@ -1,19 +1,19 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import express, { NextFunction } from 'express';
 import { Request, Response } from 'express';
-import { ErrorCode } from './error-handler/error-code';
-import { ErrorException } from './error-handler/error-exception';
 import { errorHandler } from './error-handler/error-handler';
-import { connect } from './models/db/mongoose-connection';
-import { IUser, UserModel } from './models/db/user.db';
+import { ErrorException } from './error-handler/error-exception';
+import { ErrorCode } from './error-handler/error-code';
+import { connect } from './models/mongoose.index';
+import { IUser, UserModel } from './models/user/user.db';
+import { comparePassword, passwordHash } from './lib/crypto.lib';
 import { ulid } from 'ulid';
-import { comparePassword, passwordHash } from './auth/password-hash';
-import { generateAuthToken } from './auth/jwt';
-import { authMiddleware } from './auth/auth.middleware';
-import { NoteCreate, NoteCreateAPI } from './models/db/note/note.model';
-import { validate } from 'class-validator';
-import { NoteModel } from './models/db/note/note.db';
+import { generateAuthToken } from './lib/auth.lib';
+import { authMiddleware } from './middlewares/auth.middleware';
 
 const app = express();
+
 app.use(
   express.urlencoded({
     extended: true,
@@ -54,22 +54,22 @@ const someOtherFunction = () => {
 };
 app.get('/throw-async-await-error', async (req: Request, res: Response, next: NextFunction) => {
   // express 4
-  try {
-    await someOtherFunction();
-  } catch (err) {
-    next(err);
-    // next line will not work as expected
-    // throw err
-  }
+  // try {
+  //   await someOtherFunction();
+  // } catch (err) {
+  //   next(err);
+  //   // next line will not work as expected
+  //   // throw err
+  // }
   // express 5
-  // await someOtherFunction();
+  await someOtherFunction();
 });
 
 app.post('/sign-up', async (req: Request, res: Response, next: NextFunction) => {
   const { email, name, password } = req.body;
   // check if user exists
   const userExists = await UserModel.findOne({ email: email });
-  if (!!userExists) {
+  if (userExists) {
     next(new ErrorException(ErrorCode.DuplicateEntityError, { email }));
   }
 
@@ -81,16 +81,14 @@ app.post('/sign-up', async (req: Request, res: Response, next: NextFunction) => 
     name,
     password: hash,
   };
-  const created = await UserModel.create(newUser);
+  await UserModel.create(newUser);
   res.send({ done: true });
 });
 
 app.post('/sign-in', async (req: Request, res: Response, next: NextFunction) => {
   const { email, password } = req.body;
-  console.log('req.body', req.body);
   // check if user exists
   const userExists = await UserModel.findOne({ email: email });
-  console.log('userExists', userExists);
   if (!userExists) {
     next(new ErrorException(ErrorCode.Unauthenticated));
   }
@@ -112,32 +110,6 @@ app.get('/protected-route', authMiddleware, (req: Request, res: Response, next: 
   const tokenData = req.body.tokenData;
   console.log('tokenData', tokenData);
   res.send('this is a protected route');
-});
-
-app.post('/note', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
-  // data from the token that is verified
-  const noteNew = new NoteCreateAPI();
-  noteNew.title = req.body.title;
-  noteNew.body = req.body.body;
-
-  // verify input parameters
-  const errors = await validate(noteNew);
-  if (errors.length) {
-    next(new ErrorException(ErrorCode.ValidationError, errors));
-  }
-
-  // create note data
-  const tokenData: { _id: string; email: string } = req.body.tokenData;
-  const noteCreate: NoteCreate = {
-    _id: ulid(),
-    title: noteNew.title,
-    body: noteNew.body,
-
-    authorId: tokenData._id,
-  };
-
-  const created = await NoteModel.create(noteCreate);
-  res.send(created);
 });
 
 app.use(errorHandler); // registration of handler

@@ -1,10 +1,18 @@
-version: '3.3'
-
 services:
-  mongo:
-    container_name: mongo
-    image: mongo:5
+  mongodb:
+    image: mongo:noble
+    container_name: mongodb
+    restart: always
     ports:
-      - 27017:27017
-    expose:
-      - 27017
+      - '27017:27017'
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - mongo_network
+
+networks:
+  mongo_network:
+    driver: bridge
+
+volumes:
+  mongodb_data:

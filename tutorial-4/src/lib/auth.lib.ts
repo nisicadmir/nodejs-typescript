@@ -1,4 +1,4 @@
-import { IUser } from '../models/db/user.db';
+import { IUser } from '../models/user/user.db';
 import jwt from 'jsonwebtoken';
 import { ErrorException } from '../error-handler/error-exception';
 import { ErrorCode } from '../error-handler/error-code';
@@ -18,6 +18,7 @@ export const verifyToken = (token: string): { _id: string; email: string } => {
     const tokenData = jwt.verify(token, jwtKey);
     return tokenData as { _id: string; email: string };
   } catch (error) {
+    console.error('Error verifying token', error);
     throw new ErrorException(ErrorCode.Unauthenticated);
   }
 };
