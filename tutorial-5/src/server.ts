@@ -13,6 +13,8 @@ import { generateAuthToken } from './lib/auth.lib';
 import { authMiddleware } from './middlewares/auth.middleware';
 import { NoteCreate, NoteCreateAPI, NoteModel } from './models/note/note.db';
 import { validate } from 'class-validator';
+import http from 'http';
+import { Server as SocketIOServer } from 'socket.io';
 
 const app = express();
 
@@ -141,6 +143,69 @@ app.post('/note', authMiddleware, async (req: Request, res: Response, next: Next
 });
 
 app.use(errorHandler); // registration of handler
+
+// Create a new HTTP server for socket.io
+const socketServer = http.createServer();
+const io = new SocketIOServer(socketServer, {
+  cors: {
+    origin: '*', // Adjust this to your needs
+    methods: ['GET', 'POST'],
+  },
+});
+
+// Listen for socket.io connections
+io.on('connection', (socket) => {
+  // Listen for socket.io connections
+  io.on('connection', (socket) => {
+    console.log('New connection created');
+
+    // Get the auth token provided on handshake.
+    const token = socket.handshake.auth.token;
+    console.log('Auth token', token);
+
+    try {
+      // Verify the token here and get user info from JWT token.
+    } catch (error) {
+      socket.disconnect(true);
+    }
+
+    // A client is disconnected.
+    socket.on('disconnect', () => {
+      console.log('A user disconnected');
+    });
+
+    // Read message recieved from client.
+    socket.on('message_from_client', (data) => {
+      console.log('message_from_client: ', data);
+    });
+
+    // Send a message to the connected client 5 seconds after the connection is created.
+    setTimeout(() => {
+      socket.emit('message_from_server', `Message: ${Math.random()}`);
+    }, 5_000);
+  });
+
+  /**
+   * New code
+   */
+  // Get the room number from the client.
+  const roomNumber: string = socket.handshake.query.roomNumber as string;
+  // Join room for specific users.
+  const room = `room-userId-${roomNumber}`;
+  socket.join(room);
+
+  // Emit to room by room number.
+  setTimeout(() => {
+    io.to(room).emit('room-userId', `You are in room number: ${roomNumber}. Message: ${Math.random()}`);
+  }, 2_000);
+
+  // Add more socket event handlers here
+});
+
+// Start the socket.io server on a different port, e.g., 4000
+socketServer.listen(4000, () => {
+  console.log('Socket.io server started on port 4000');
+});
 
 app.listen(3000, () => {
   console.log('Application started on port 3000!');

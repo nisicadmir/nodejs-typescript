@@ -24,48 +24,63 @@ npm install --save-dev @types/socket.io
 
 Initial server code:
 ```typescript
-import express from 'express';
-import { Server } from 'socket.io';
+// ... existing code ...
 
-const app = express();
+import http from 'http';
+import { Server as SocketIOServer } from 'socket.io';
 
-const server = app.listen(3000, () => {
-  console.log('Application started on port 3000!');
-});
-
-const socketIo = new Server(server, {
+// Create a new HTTP server for socket.io
+const socketServer = http.createServer();
+const io = new SocketIOServer(socketServer, {
   cors: {
-    origin: '*', // Allow any origin for testing purposes. This should be changed on production.
-  },
+    origin: "*", // Adjust this to your needs
+    methods: ["GET", "POST"]
+  }
+});
+// Listen for socket.io connections
+io.on('connection', (socket) => {
+  // Listen for socket.io connections
+  io.on('connection', (socket) => {
+    console.log('New connection created');
+
+    // Get the auth token provided on handshake.
+    const token = socket.handshake.auth.token;
+    console.log('Auth token', token);
+
+    try {
+      // Verify the token here and get user info from JWT token.
+    } catch (error) {
+      socket.disconnect(true);
+    }
+
+    // A client is disconnected.
+    socket.on('disconnect', () => {
+      console.log('A user disconnected');
+    });
+
+    // Read message recieved from client.
+    socket.on('message_from_client', (data) => {
+      console.log('message_from_client: ', data);
+    });
+
+    // Send a message to the connected client 5 seconds after the connection is created.
+    setTimeout(() => {
+      socket.emit('message_from_server', `Message: ${Math.random()}`);
+    }, 5_000);
+  });
+
+  // Add more socket event handlers here
 });
 
-socketIo.on('connection', (socket) => {
-  console.log('New connection created');
+// Start the socket.io server on a different port, e.g., 4000
+socketServer.listen(4000, () => {
+  console.log('Socket.io server started on port 4000');
+});
 
-  // Get the auth token provided on handshake.
-  const token = socket.handshake.auth.token;
-  console.log('Auth token', token);
+// ... existing code ...
 
-  try {
-    // Verify the token here and get user info from JWT token.
-  } catch (error) {
-    socket.disconnect(true);
-  }
-
-  // A client is disconnected.
-  socket.on('disconnect', () => {
-    console.log('A user disconnected');
-  });
-
-  // Read message recieved from client.
-  socket.on('message_from_client', (data) => {
-    console.log('message_from_client: ', data);
-  });
-
-  // Send a message to the connected client 5 seconds after the connection is created.
-  setTimeout(() => {
-    socket.emit('message_from_server', `Message: ${Math.random()}`);
-  }, 5_000);
+app.listen(3000, () => {
+  console.log('Application started on port 3000!');
 });
 ```
 In the code snipet above we created an Express server on port 3000 and after that we created a Socket.IO server. `socketIo.on('connection', (socket)` is called when a new connection from the client side is initiated. This is called a handshake and the first step to do after this is to get the auth token from the client and verify it. If the JWT is malicius then we will disconnect the client and the client will not get any events from the server side and if the token is valid we can get the user data from the JWT.
@@ -91,7 +106,7 @@ setTimeout(() => {
 
 ## Client code
 
-Let us create a simple html file with the following code. We will establish client communication with the server by pressing a button.
+Let's create a simple html file inside `src` (root) folder with the following code. We will establish client communication with the server by pressing a button.
 ```html
 <!DOCTYPE html>
 <html lang="en">
@@ -119,7 +134,7 @@ Let us create a simple html file with the following code. We will establish clie
 
         isConnectionEstablished = true;
 
-        const socketIo = io('http://localhost:3000', {
+        const socketIo = io('http://localhost:4000', {
           auth: {
             token: 'json-web-token',
           },
@@ -163,7 +178,7 @@ It is important to note that we provided the Socket.IO client library with scrip
 
 Creating a communication channel by sending a token which is required for validating the user.
 ```javascript
-const socketIo = io('http://localhost:3000', {
+const socketIo = io('http://localhost:4000', {
   auth: {
     token: 'json-web-token',
   },
@@ -212,36 +227,41 @@ From time to time it is necessary to separate certain users so that we can only 
 
 Updated server code with rooms.
 ```typescript
-socketIo.on('connection', (socket) => {
-  console.log('New connection created');
+// Listen for socket.io connections
+io.on('connection', (socket) => {
+  // Listen for socket.io connections
+  io.on('connection', (socket) => {
+    console.log('New connection created');
 
-  const token = socket.handshake.auth.token;
-  console.log('Auth token', token);
+    // Get the auth token provided on handshake.
+    const token = socket.handshake.auth.token;
+    console.log('Auth token', token);
 
-  try {
-    // Verify the token here and get user info from JWT token.
-  } catch (error) {
-    socket.disconnect(true);
-  }
+    try {
+      // Verify the token here and get user info from JWT token.
+    } catch (error) {
+      socket.disconnect(true);
+    }
 
-  // A client is disconnected.
-  socket.on('disconnect', () => {
-    console.log('A user disconnected');
+    // A client is disconnected.
+    socket.on('disconnect', () => {
+      console.log('A user disconnected');
+    });
+
+    // Read message recieved from client.
+    socket.on('message_from_client', (data) => {
+      console.log('message_from_client: ', data);
+    });
+
+    // Send a message to the connected client 5 seconds after the connection is created.
+    setTimeout(() => {
+      socket.emit('message_from_server', `Message: ${Math.random()}`);
+    }, 5_000);
   });
-
-  // Read message recieved from client.
-  socket.on('message_from_client', (data) => {
-    console.log('message_from_client: ', data);
-  });
-
-  // Send a message to the connected client 5 seconds after the connection is created.
-  setTimeout(() => {
-    socket.emit('message_from_server', `Message: ${Math.random()}`);
-  }, 5_000);
 
   /**
-    * New code
-    */
+   * New code
+   */
   // Get the room number from the client.
   const roomNumber: string = socket.handshake.query.roomNumber as string;
   // Join room for specific users.
@@ -250,8 +270,10 @@ socketIo.on('connection', (socket) => {
 
   // Emit to room by room number.
   setTimeout(() => {
-    socketIo.to(room).emit('room-userId', `You are in room number: ${roomNumber}`);
+    io.to(room).emit('room-userId', `You are in room number: ${roomNumber}`);
   }, 2_000);
+
+  // Add more socket event handlers here
 });
 ```
 
@@ -274,11 +296,11 @@ On the client side, let's add input where users will be able to enter a room num
 ```html
 <!-- Add text input field next to 'Join' button -->
 <input type="text" placeholder="Room number" id="roomId" />
-<button onclick="functionToExecute()">Join</button>
+<button onclick="establishConnection()">Join</button>
 ```
 ```javascript
 // Update connection for Socket.
-const socketIo = io('http://localhost:3000', {
+const socketIo = io('http://localhost:4000', {
   auth: {
     token: 'json-web-token',
   },
