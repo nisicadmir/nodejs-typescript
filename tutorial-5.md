@@ -200,13 +200,6 @@ setTimeout(function () {
 ```
 
 ## Run the application
-On the server side add script for running the server in package.json file:
-```json
-"scripts": {
-  "start": "ts-node src/server.ts"
-},
-```
-
 Now let's run the Node.js application with:
 ```bash
 npm run start
