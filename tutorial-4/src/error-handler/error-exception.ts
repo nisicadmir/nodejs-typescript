@@ -19,6 +19,9 @@ export class ErrorException extends Error {
       case ErrorCode.AsyncError:
         this.status = 400;
         break;
+      case ErrorCode.ValidationError:
+        this.status = 422;
+        break;
       case ErrorCode.NotFound:
         this.status = 404;
         break;

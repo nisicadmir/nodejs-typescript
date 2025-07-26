@@ -11,6 +11,8 @@ import { comparePassword, passwordHash } from './lib/crypto.lib';
 import { ulid } from 'ulid';
 import { generateAuthToken } from './lib/auth.lib';
 import { authMiddleware } from './middlewares/auth.middleware';
+import { NoteCreate, NoteCreateAPI, NoteModel } from './models/note/note.db';
+import { validate } from 'class-validator';
 
 const app = express();
 
@@ -110,6 +112,32 @@ app.get('/protected-route', authMiddleware, (req: Request, res: Response, next: 
   const tokenData = req.body.tokenData;
   console.log('tokenData', tokenData);
   res.send('this is a protected route');
+});
+
+app.post('/note', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
+  // data from the token that is verified
+  const noteNew = new NoteCreateAPI();
+  noteNew.title = req.body.title;
+  noteNew.body = req.body.body;
+
+  // verify input parameters
+  const errors = await validate(noteNew);
+  if (errors.length) {
+    throw new ErrorException(ErrorCode.ValidationError, errors);
+  }
+
+  // create note data
+  const tokenData: { _id: string; email: string } = req.body.tokenData;
+  const noteCreate: NoteCreate = {
+    _id: ulid(),
+    title: noteNew.title,
+    body: noteNew.body,
+
+    authorId: tokenData._id,
+  };
+
+  const created = await NoteModel.create(noteCreate);
+  res.send({ note: created });
 });
 
 app.use(errorHandler); // registration of handler

@@ -12,7 +12,7 @@ I personally think it is better to use a class based validator with the TypeScri
 
 ## Modeling
 
-We will create a simple model for creating notes.
+We will create a simple model for creating notes. Let's create it inside `src/models/note` as `note.db.ts`. In this file we will keep models for DB and for validation as well.
 ```typescript
 export class Note {
   _id: string;
@@ -27,8 +27,7 @@ export class Note {
 }
 ```
 
-
-Code for mongoose.
+Code for mongoose (inside same file).
 ```typescript
 import { model, Model, Schema } from 'mongoose';
 import { Note } from './note.model';
@@ -56,23 +55,24 @@ npm install --save class-validator
 ```json
 {
   "compilerOptions": {
-    "experimentalDecorators": true, // <- add this
-    "target": "es5",
+    "target": "es2016",
     "module": "commonjs",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
     "outDir": "./dist",
-    "rootDir": "./",
+    "rootDir": "./src",
     "baseUrl": "./",
-    "paths": {},
-    "esModuleInterop": true
+    "experimentalDecorators": true // <- new option
   }
 }
-
 ```
 
 Now we can create models for validation and if we look at the code below, we will see that we have a couple of models.
 - `Note` is a basic model which is used for mongoose for creating its schema.
 - `NoteCreate` model is a model which is used to create data for MongoDB.
 - `NoteCreateAPI` is a validation model which is the data that we expect to come to the API.
+
+We will add the models inside the same file `note.db.ts` we previously created.
 
 ```typescript
 import { IsString, MaxLength, MinLength } from 'class-validator';
@@ -116,7 +116,7 @@ I have added only some basic decorators but there is a great flexibility on how 
 
 We will now create a POST API method and send data to that route.
 
-NOTE: The route is protected with authMiddleware we created in one of the previous tutorials.
+NOTE: The route is protected with authMiddleware we created in one of the previous tutorials. Align all the imports in `server.ts` file.
 
 ```typescript
 app.post('/note', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
@@ -128,7 +128,7 @@ app.post('/note', authMiddleware, async (req: Request, res: Response, next: Next
   // verify input parameters
   const errors = await validate(noteNew);
   if (errors.length) {
-    next(new ErrorException(ErrorCode.ValidationError, errors));
+    throw new ErrorException(ErrorCode.ValidationError, errors); // <- new ErrorCode enum
   }
 
   // create note data
@@ -142,8 +142,31 @@ app.post('/note', authMiddleware, async (req: Request, res: Response, next: Next
   };
 
   const created = await NoteModel.create(noteCreate);
-  res.send(created);
+  res.send({ note: created });
 });
+```
+NOTE: In `error-code.ts` add additional enum in switch case for status code.
+```typescript
+    switch (code) {
+      case ErrorCode.Unauthenticated:
+        this.status = 401;
+        break;
+      case ErrorCode.MaximumAllowedGrade:
+        this.status = 400;
+        break;
+      case ErrorCode.AsyncError:
+        this.status = 400;
+        break;
+      case ErrorCode.ValidationError: // <- new
+        this.status = 422;
+        break;
+      case ErrorCode.NotFound:
+        this.status = 404;
+        break;
+      default:
+        this.status = 500;
+        break;
+    }
 ```
 
 Now that everything is prepared, we can check what happens when we send data which is not valid and when we send data which is valid.
