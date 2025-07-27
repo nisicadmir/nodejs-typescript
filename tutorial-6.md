@@ -38,7 +38,6 @@ After we followed all the instructions from the provided tutorial now we should 
 
 Now let's install Kafka. We can install Kafka in several ways, but for me the easiest way is to install it via Docker. We will install the following Docker images:
 - Kafka
-- Zookeeper
 - Kafka UI
 
 In the root folder (link of github repository is provided at the begining of the article), there is a file `docker-compose.yml`. Let's start the images with command `docker-compose up -d` and make sure that the containers are up and running.
@@ -52,7 +51,7 @@ npm install --save kafkajs
 ```
 
 Now it is necessary to modify the file `src/server.ts`. Let's create a connection for Kafka.
-```
+```typescript
 import express from 'express';
 import { Request, Response } from 'express';
 import { Kafka, Producer } from 'kafkajs';
