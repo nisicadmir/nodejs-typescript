@@ -1,11 +1,11 @@
 {
   "compilerOptions": {
-    "target": "ES5",
-    "module": "CommonJS",
+    "target": "es2016",
+    "module": "commonjs",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
     "outDir": "./dist",
-    "rootDir": "./",
-    "baseUrl": "./",
-    "paths": {},
-    "esModuleInterop": true
+    "rootDir": "./src",
+    "baseUrl": "./"
   }
 }
