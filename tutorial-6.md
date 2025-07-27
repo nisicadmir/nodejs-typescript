@@ -53,12 +53,36 @@ npm install --save kafkajs
 
 Now it is necessary to modify the file `src/server.ts`. Let's create a connection for Kafka.
 ```
-import { Kafka } from 'kafkajs';
+import express from 'express';
+import { Request, Response } from 'express';
+import { Kafka, Producer } from 'kafkajs';
 
+const app = express();
+
+// Instance of Kafka
 const kafka = new Kafka({
   clientId: 'my-app',
-  brokers: ['kafka:9092'], // url 'kafka' is the host and port is 9092
+  brokers: ['kafka:9092'],
 });
+
+const producer: Producer = kafka.producer();
+
+// Connect to producer
+async function runProducer() {
+  await producer.connect();
+  console.log('Producer connected');
+}
+
+runProducer().catch(console.error);
+
+app.get('/', (req: Request, res: Response) => {
+  res.send('Application works!');
+});
+
+app.listen(3000, () => {
+  console.log('Application started on port 3000!');
+});
+
 ```
 
 If we look at the code snippet above, we'll see `brokers: ['kafka:9092']`. With this part of code we will connect to url `kafka` and port `9092`. Since in this case the host is kafka and not localhost, it is necessary to create a proxy that will redirect the network from kafka to localhost. We can achieve this by adding `127.0.0.1 kafka` in the file `etc/hosts`
@@ -94,6 +118,7 @@ consumer.connect();
 consumer.subscribe({ topic: 'topic-test-1', fromBeginning: true });
 
 consumer.run({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   eachMessage: async ({ topic, partition, message }) => {
     console.log({
       value: message.value.toString(),
@@ -111,7 +136,7 @@ There is one more step before we start the application. Let's create a topic on 
 Creating a topic can be done in several ways, and in this tutorial I will show you how to create a topic via the `command line tool` and via the `Kafka UI` container that we created via Docker.
 
 - With UI
-Visit `http://localhost:7000` which should open the application for Kafka UI. Go to topics and create a new topic with name `topic-test-1` and it should have two partitions.
+Visit `http://localhost:8080` which should open the application for Kafka UI. Go to topics and create a new topic with name `topic-test-1` and it should have two partitions.
 ![Image 3 - Kafka UI](https://raw.githubusercontent.com/nisicadmir/nodejs-typescript/master/tutorial-6/images/image_3.png "Image 3 - Kafka UI")
 
 - With command line

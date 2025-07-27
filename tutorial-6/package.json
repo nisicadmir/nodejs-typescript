@@ -7,6 +7,7 @@
     "start": "ts-node ./src/server.ts",
     "start:nodemon": "nodemon --exec ts-node ./src/server.ts",
     "start:prod": "npm run build && node ./dist/server.js",
+    "start:consumer": "ts-node ./src/consumer/index.ts",
     "build": "npx tsc"
   },
   "keywords": [],
