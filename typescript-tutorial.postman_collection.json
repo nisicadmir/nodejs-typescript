@@ -1,0 +1,258 @@
+{
+	"info": {
+		"_postman_id": "2363f392-4840-4b0b-a212-eed590b05989",
+		"name": "typescript-tutorial",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "8136612"
+	},
+	"item": [
+		{
+			"name": "home",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{server}}",
+					"host": [
+						"{{server}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "throw-unauthenticated",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{server}}/throw-unauthenticated",
+					"host": [
+						"{{server}}"
+					],
+					"path": [
+						"throw-unauthenticated"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "throw-maximum-allowed-grade",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{server}}/throw-maximum-allowed-grade",
+					"host": [
+						"{{server}}"
+					],
+					"path": [
+						"throw-maximum-allowed-grade"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "throw-unknown-error",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{server}}/throw-unknown-error",
+					"host": [
+						"{{server}}"
+					],
+					"path": [
+						"throw-unknown-error"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "throw-async-await-error",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{server}}/throw-async-await-error",
+					"host": [
+						"{{server}}"
+					],
+					"path": [
+						"throw-async-await-error"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "sign-up",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"email\": \"ni.admir@gmail.com\",\n    \"name\": \"Admir Nisic\",\n    \"password\": \"123456\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{server}}/sign-up",
+					"host": [
+						"{{server}}"
+					],
+					"path": [
+						"sign-up"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "sign-in",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"email\": \"ni.admir@gmail.com\",\n    \"password\": \"123456\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{server}}/sign-in",
+					"host": [
+						"{{server}}"
+					],
+					"path": [
+						"sign-in"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "protected-route",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiIwMUsxMVJLWEJFTUc4RldQQ0JIUFBFMFk5VCIsImVtYWlsIjoibmkuYWRtaXJAZ21haWwuY29tIiwiaWF0IjoxNzUzNDgwNjAxLCJleHAiOjE3NTM0ODc4MDF9.ESAbPLJ7VZFZl5yS1oBJEF4I1RFmQCfVV1LXNQ_5f2Y",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"email\": \"ni.admir@gmail.com\",\n    \"name\": \"Admir Nisic\",\n    \"password\": \"123456\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{server}}/protected-route",
+					"host": [
+						"{{server}}"
+					],
+					"path": [
+						"protected-route"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "note create",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiIwMUsxMVJLWEJFTUc4RldQQ0JIUFBFMFk5VCIsImVtYWlsIjoibmkuYWRtaXJAZ21haWwuY29tIiwiaWF0IjoxNzUzNTIyMzE5LCJleHAiOjE3NTM1Mjk1MTl9.YNv3jLLPlEFvxMzhnMB0DsFmcdDczv1cPMUnnSSwBW0",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"body\": \"This is the text of body of the note which is just enough of text to pass the validation on BE side...\",\n    \"title\": \"Title of the note...\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{server}}/note",
+					"host": [
+						"{{server}}"
+					],
+					"path": [
+						"note"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "consumer send",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiIwMUsxMVJLWEJFTUc4RldQQ0JIUFBFMFk5VCIsImVtYWlsIjoibmkuYWRtaXJAZ21haWwuY29tIiwiaWF0IjoxNzUzNTIyMzE5LCJleHAiOjE3NTM1Mjk1MTl9.YNv3jLLPlEFvxMzhnMB0DsFmcdDczv1cPMUnnSSwBW0",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{server}}/send",
+					"host": [
+						"{{server}}"
+					],
+					"path": [
+						"send"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
